@@ -1,0 +1,15 @@
+-include "io.scl"
+
+fn add_nums (int a, int b) : int {
+  return a + b
+}
+
+fn main() : int {
+  int a = 10
+  int b = 50
+
+  int c = add_nums(a, b)
+
+  fasm "output_int %d", c
+  return 0
+}
