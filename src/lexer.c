@@ -668,8 +668,6 @@ const char *lexer_token_kind_to_str(token_kind kind) {
 }
 
 void lexer_print_tokens(dynamic_array *tokens) {
-  scu_pdebug("Lexing Debug Statements:\n");
-
   for (unsigned int i = 0; i < tokens->count; i++) {
     token token;
     dynamic_array_get(tokens, i, &token);

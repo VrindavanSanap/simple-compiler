@@ -20,11 +20,17 @@
 
 #include "codegen.h"
 #include "cstate.h"
+#include "ds/dynamic_array.h"
+#include "fasm_utils.h"
+#include "fstate.h"
+#include "ld_utils.h"
 #include "lexer.h"
 #include "semantic.h"
 #include "utils.h"
 
-#include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 int main(int argc, char *argv[]) {
@@ -35,49 +41,81 @@ int main(int argc, char *argv[]) {
   double time_taken;
   start = clock();
 
-  // Lexing
-  lexer_tokenize(state->code_buffer, state->code_buffer_len, state->tokens,
-                 state->include_dir, &state->error_count);
+  for (size_t i = 0; i < state->files.count; i++) {
+    fstate *fst;
+    dynamic_array_get(&state->files, i, &fst);
 
-  // Lexing test function
-  if (state->options.verbose)
-    lexer_print_tokens(state->tokens);
+    // Lexing
+    lexer_tokenize(fst->code_buffer, fst->code_buffer_len, fst->tokens,
+                   state->include_dir, &fst->error_count);
 
-  // Parsing
-  parser_init(state->tokens, state->parser);
-  parser_parse_program(state->parser, state->program, &state->error_count);
+    // Lexing test function
+    if (state->options.verbose) {
+      scu_pdebug("Lexing Debug Statements for %s:\n", fst->filepath);
+      lexer_print_tokens(fst->tokens);
+    }
 
-  // Parsing test function
-  if (state->options.verbose)
-    parser_print_program(state->program);
+    // Parsing
+    parser_init(fst->tokens, fst->parser);
+    parser_parse_program(fst->parser, fst->program, &fst->error_count);
 
-  // Semantic Analysis
-  check_semantics(&state->program->instrs, state->variables, state->functions,
-                  &state->error_count);
+    // Parsing test function
+    if (state->options.verbose) {
+      scu_pdebug("Parsing Debug Statements for %s:\n", fst->filepath);
+      parser_print_program(fst->program);
+    }
 
-  // Semantic Debug Statements
-  if (state->options.verbose)
-    scu_pdebug("Semantic Analysis Complete\n");
+    // Semantic Analysis
+    check_semantics(&fst->program->instrs, fst->variables, fst->functions,
+                    &fst->error_count);
 
-  // Codegen & Assembler
-  instrs_to_asm(state->program, state->variables, state->loops,
-                state->functions, state->output_filename, &state->error_count);
+    // Semantic Debug Statement
+    if (state->options.verbose)
+      scu_pdebug("Semantic Analysis Complete for %s\n", fst->filepath);
+
+    // Codegen & Assembler
+    instrs_to_asm(fst->program, fst->variables, fst->loops, fst->functions,
+                  fst->extracted_filepath, &fst->error_count);
+
+    // Codegen & Assembler Debug Statements
+    if (state->options.verbose)
+      scu_pdebug("Codegen & Assembling Complete for %s\n", fst->filepath);
+
+    fasm_assemble(fst->extracted_filepath,
+                  scu_format_string("%s.s", fst->extracted_filepath));
+
+    scu_psuccess("COMPILED %s\n", fst->filepath);
+  }
+
+  size_t total_len = 0;
+  for (size_t i = 0; i < state->files.count; i++) {
+    fstate *fst;
+    dynamic_array_get(&state->files, i, &fst);
+    total_len += strlen(fst->extracted_filepath) + 3;
+  }
+
+  char *obj_file_list = scu_checked_malloc(total_len + 1);
+  obj_file_list[0] = '\0';
+
+  for (size_t i = 0; i < state->files.count; i++) {
+    fstate *fst;
+    dynamic_array_get(&state->files, i, &fst);
+    if (i > 0)
+      strcat(obj_file_list, " ");
+    strcat(obj_file_list, fst->extracted_filepath);
+    strcat(obj_file_list, ".o");
+  }
+
+  ld_link(state->output_filepath, obj_file_list);
+
+  free(obj_file_list);
 
   end = clock();
   time_taken = (double)(end - start) / CLOCKS_PER_SEC;
 
-  // Restore STDOUT
-  stdout = fopen("/dev/tty", "w");
+  scu_psuccess("  LINKED %s - %.2fs total time taken\n", state->output_filepath,
+               time_taken);
 
-  scu_psuccess("%.2fs %s\n", time_taken, state->filename);
-
-  // Codegen & Assembler Debug Statements
-  if (state->options.verbose)
-    scu_pdebug("Codegen & Assembling Complete\n");
-
-  // Free memory
-  fflush(stdout);
-  fclose(stdout);
   cstate_free(state);
 
   return 0;

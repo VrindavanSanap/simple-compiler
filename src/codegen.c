@@ -3,7 +3,6 @@
 #include "ds/dynamic_array.h"
 #include "ds/ht.h"
 #include "ds/stack.h"
-#include "fasm.h"
 #include "utils.h"
 
 #include <stddef.h>
@@ -371,7 +370,9 @@ static void function_asm(fn_node *fn, ht *functions, unsigned int *errors) {
   if (fn->kind != FN_DEFINED)
     return;
 
-  printf("\n%s:\n", fn->name);
+  printf("\npublic %s\n"
+         "%s:\n",
+         fn->name, fn->name);
 
   printf("    push rbp\n");
   printf("    mov rbp, rsp\n");
@@ -592,10 +593,6 @@ static void instr_asm(instr_node *instr, ht *variables, unsigned int *if_count,
     printf(".%s:\n", instr->label.label);
     break;
 
-  case INSTR_FASM_DEFINE:
-    // This is supposed to do nothing as it is already handled
-    break;
-
   case INSTR_FASM:
     if (instr->fasm.kind == FASM_PAR) {
       int index = get_var_stack_offset(variables, &instr->fasm.argument, NULL);
@@ -670,12 +667,6 @@ static void instr_asm(instr_node *instr, ht *variables, unsigned int *if_count,
     }
     break;
 
-  case INSTR_FN_DEFINE:
-    break;
-
-  case INSTR_FN_DECLARE:
-    break;
-
   case INSTR_FN_CALL:
     fn_call_asm(&instr->fn_call, variables, program, errors);
     break;
@@ -688,6 +679,9 @@ static void instr_asm(instr_node *instr, ht *variables, unsigned int *if_count,
     } else {
       printf("    xor rax, rax\n");
     }
+    break;
+
+  default:
     break;
   }
 }
@@ -726,14 +720,23 @@ void instrs_to_asm(program_node *program, ht *variables, stack *loops,
     has_main = 1;
   }
 
+  printf("format ELF64\n");
+
   if (has_main) {
-    printf("format ELF64 executable\n");
     printf("LINE_MAX equ 1024\n");
-    printf("entry _start\n");
-    printf("segment readable executable\n");
-  } else {
-    printf("section '.text' executable\n\n");
+    printf("public _start\n");
   }
+
+  for (unsigned int i = 0; i < program->instrs.count; i++) {
+    struct instr_node instr;
+    dynamic_array_get(&program->instrs, i, &instr);
+    if (instr.kind == INSTR_FN_DECLARE) {
+      printf("\nextrn %s\n", instr.fn_declare_node.name);
+    }
+  }
+  printf("\n");
+
+  printf("section '.text' executable\n");
 
   for (unsigned int i = 0; i < program->instrs.count; i++) {
     struct instr_node instr;
@@ -760,7 +763,7 @@ void instrs_to_asm(program_node *program, ht *variables, stack *loops,
     struct instr_node instr;
     dynamic_array_get(&program->instrs, i, &instr);
 
-    if (instr.kind != INSTR_FN_DEFINE && instr.kind != INSTR_FN_DECLARE &&
+    if (instr.kind != INSTR_FN_DEFINE && instr.kind == INSTR_FN_DECLARE &&
         instr.kind != INSTR_FASM_DEFINE) {
       has_global_code = 1;
       break;
@@ -809,7 +812,7 @@ void instrs_to_asm(program_node *program, ht *variables, stack *loops,
   }
 
   if (has_main) {
-    printf("segment readable writeable\n");
+    printf("section '.data' writeable\n");
     printf("line rb LINE_MAX\n");
     printf("newline db 10, 0\n");
     printf("char_buf db 0, 0\n");
@@ -818,6 +821,7 @@ void instrs_to_asm(program_node *program, ht *variables, stack *loops,
   fflush(stdout);
   fclose(stdout);
 
-  fasm_assemble(output_asm_file, filename);
   free(output_asm_file);
+
+  stdout = fopen("/dev/tty", "w");
 }

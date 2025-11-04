@@ -12,10 +12,6 @@
 #define CSTATE_H
 
 #include "ds/dynamic_array.h"
-#include "ds/ht.h"
-#include "ds/stack.h"
-#include "parser.h"
-
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -45,10 +41,9 @@ typedef struct coptions {
  */
 typedef struct cstate {
   /*
-   * Stores the name of the file to be compiled.
-   * Ex: main.sclc
+   * An array of fstates.
    */
-  const char *filename;
+  dynamic_array files;
 
   /*
    * State in which directory the scl files to be included are located
@@ -56,10 +51,10 @@ typedef struct cstate {
   char *include_dir;
 
   /*
-   * Name of the output file. default is extracted from filename.
+   * Path to the output file. default is extracted from the first filepath.
    * Ex: main.sclc => main
    */
-  char *output_filename;
+  char *output_filepath;
 
   /*
    * Options for the compilation process.
@@ -70,22 +65,6 @@ typedef struct cstate {
    * Main error count for the whole compilation process.
    */
   unsigned int error_count;
-
-  /*
-   * Source buffer and its size in bytes.
-   */
-  char *code_buffer;
-  size_t code_buffer_len;
-
-  /*
-   * Variables / artifacts for the whole compiler pipeline.
-   */
-  dynamic_array *tokens;
-  parser *parser;
-  program_node *program;
-  ht *variables;
-  stack *loops;
-  ht *functions;
 } cstate;
 
 /*

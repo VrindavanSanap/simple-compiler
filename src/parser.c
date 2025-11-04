@@ -1512,8 +1512,6 @@ static void print_instr(instr_node *instr) {
 }
 
 void parser_print_program(program_node *program) {
-  scu_pdebug("Parsing Debug Statements:\n");
-
   for (unsigned int i = 0; i < program->instrs.count; i++) {
     instr_node instr;
     dynamic_array_get(&program->instrs, i, &instr);

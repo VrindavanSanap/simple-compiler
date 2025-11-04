@@ -19,6 +19,7 @@ Only linux systems are supported for now.
 ## Tools required
 
 - [`fasm`](https://flatassembler.net)
+- [`gnu ld`](https://www.gnu.org/software/binutils)
 
 ## Usage
 
