@@ -256,7 +256,7 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
     }
   }
 
-  arena_init(&cst->file_arena, 1 << 9);
+  arena_init(&cst->file_arena);
   dynamic_array_init(&cst->files, sizeof(fstate *));
 
   for (u64 i = 0; i < filenames.count; i++) {

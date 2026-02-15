@@ -10,10 +10,17 @@
 
 #include "common.h"
 
-typedef struct mem_arena {
+typedef struct mem_arena_block {
   u64 capacity;
   u64 pos;
   u8 *buffer;
+  struct mem_arena_block *next;
+} mem_arena_block;
+
+typedef struct mem_arena {
+  mem_arena_block *first;
+  mem_arena_block *current;
+  u64 default_block_size;
 } mem_arena;
 
 /*
@@ -21,9 +28,8 @@ typedef struct mem_arena {
  * capacity.
  *
  * @param arena: pointer to a mem_arena
- * @param capacity: Maximum size in bytes that the arena can hold
  */
-void arena_init(mem_arena *arena, u64 capacity);
+void arena_init(mem_arena *arena);
 
 /*
  * @brief: Frees a mem_arena
@@ -51,14 +57,6 @@ void *arena_push(mem_arena *arena, u64 size);
 void arena_pop(mem_arena *arena, u64 size);
 
 /*
- * @brief: Resets arena to a specific position, freeing all memory above it.
- *
- * @param arena: Pointer to the arena
- * @param pos: Position in bytes to reset the arena to
- */
-void arena_pop_to(mem_arena *arena, u64 pos);
-
-/*
  * @brief: Clears the entire arena, freeing all allocated memory.
  *
  * @param arena: Pointer to the arena to clear
@@ -68,9 +66,18 @@ void arena_clear(mem_arena *arena);
 /*
  * @brief: Helper macro to allocate and return a pointer to a struct of type T
  *
- * @param arena: Pointer to the arena to clear
+ * @param arena: Pointer to the arena to push the struct to
  * @param T: any data-type
  */
 #define arena_push_struct(arena, T) (T *)arena_push((arena), sizeof(T))
+
+/*
+ * @brief: Helper macro to allocate an array of elements to the arena
+ *
+ * @param arena: Pointer to the arena to push the array to
+ * @param T: any data-type
+ * @param count: number of elements
+ */
+#define arena_push_array(a, T, count) (T *)arena_push(a, sizeof(T) * (count))
 
 #endif // !ARENA_H

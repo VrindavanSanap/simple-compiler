@@ -8,7 +8,7 @@
 #include <string.h>
 
 void ast_init(ast *a) {
-  arena_init(&a->arena, 5 << 20); // allocate 5 megabytes for now
+  arena_init(&a->arena);
   dynamic_array_init(&a->instrs, sizeof(instr_node));
 }
 
