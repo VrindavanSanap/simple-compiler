@@ -2,17 +2,15 @@
 #include "common.h"
 #include "utils.h"
 
+#include <stdalign.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define ARENA_DEFAULT_BLOCK_SIZE (1 << 20)
 
-#define ARENA_ALIGN_UP_POW2(n, p) ((u64)n + ((u64)p - 1)) & (~((u64)p - 1))
-
-#define ARENA_ALIGN (sizeof(void *))
-
 void arena_init(mem_arena *arena) {
-  arena->default_block_size = ARENA_DEFAULT_BLOCK_SIZE;
+  arena->default_block_size = (1 << 20);
   arena->first = scu_checked_malloc(sizeof(mem_arena_block));
   arena->first->buffer = scu_checked_malloc(arena->default_block_size);
   arena->first->capacity = arena->default_block_size;
@@ -22,7 +20,9 @@ void arena_init(mem_arena *arena) {
 }
 
 void *arena_push(mem_arena *arena, u64 size) {
-  u64 pos_aligned = ARENA_ALIGN_UP_POW2(arena->current->pos, ARENA_ALIGN);
+  u64 pos_aligned = (arena->current->pos + (alignof(max_align_t)) - 1) &
+                    ~((alignof(max_align_t)) - 1);
+
   u64 new_pos = pos_aligned + size;
 
   if (new_pos > arena->current->capacity) {
