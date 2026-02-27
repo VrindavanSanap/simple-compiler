@@ -1,3 +1,10 @@
+/*
+ * dynamic_array: simple resizeable array implementation
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #ifndef DYNAMIC_ARRAY
 #define DYNAMIC_ARRAY
 

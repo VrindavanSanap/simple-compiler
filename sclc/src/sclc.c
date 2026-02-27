@@ -1,21 +1,9 @@
 /*
- * sclc: a simple compiler, don't have a specific goal for it yet, just to
- * practice my programming compiler design and development skills.
+ * sclc: yet another systems programming language
+ * Initial compiler implementation in C
  *
- * Copyright (C) 2025 Samyak Bambole <bambole@duck.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #include "backend/backend.h"

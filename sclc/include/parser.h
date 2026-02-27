@@ -1,5 +1,8 @@
 /*
- * parser: Parser for the simple-compiler
+ * parser: recursive-descent parser for the SCULL language
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef PARSER_H

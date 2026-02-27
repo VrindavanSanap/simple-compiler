@@ -1,5 +1,8 @@
 /*
- * lexer: Lexical analyzer for the simple-compiler
+ * lexer: for the SCULL language
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef LEXER_H

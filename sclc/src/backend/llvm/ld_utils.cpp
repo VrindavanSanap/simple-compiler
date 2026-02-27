@@ -1,3 +1,10 @@
+/*
+ * ld_utils: calls linker
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "backend/llvm/ld_utils.hpp"
 
 extern "C" {

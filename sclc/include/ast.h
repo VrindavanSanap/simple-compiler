@@ -1,5 +1,8 @@
 /*
- * ast: Abstract Syntax Tree implementation and node definitions.
+ * ast: SCULL Abstract Syntax Tree function declarations and node definitions.
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef AST

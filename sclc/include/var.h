@@ -1,5 +1,8 @@
 /*
- * var: Contains all variable and related declarations.
+ * var: variable, symbol and types for the SCULL Langauge
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef VAR

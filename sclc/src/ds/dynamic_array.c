@@ -1,3 +1,10 @@
+/*
+ * dynamic_array: simple resizeable array implementation
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "ds/dynamic_array.h"
 #include "common.h"
 #include "utils.h"

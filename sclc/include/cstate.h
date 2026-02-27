@@ -2,10 +2,8 @@
  * cstate: Per-binary compilation state, groups all variables and options for
  * one build unit.
  *
- * Usage:
- * cstate *state = cstate_init(&cst, argc, argv);
- * ...
- * cstate_free(state);
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef CSTATE_H

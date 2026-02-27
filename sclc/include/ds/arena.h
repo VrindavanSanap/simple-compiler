@@ -1,8 +1,10 @@
 /*
- * arena: memory arena allocator for fast bulk allocation.
+ * arena: simple chained arena implementation, initial implementation inspired
+ *        from "i hate malloc/free with a passion" by MagicalBat on YouTube
+ *        (https://youtu.be/jgiMagdjA1s)
  *
- * initial implementation inspired from "i hate malloc/free with a passion" by
- * MagicalBat on YouTube (https://youtu.be/jgiMagdjA1s)
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef ARENA_H

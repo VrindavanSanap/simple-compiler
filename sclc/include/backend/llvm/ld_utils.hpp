@@ -1,5 +1,8 @@
 /*
- * ld_utils: contains functions for the ld.lld linker
+ * ld_utils: calls linker
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef LD_UTILS

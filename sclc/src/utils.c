@@ -1,3 +1,10 @@
+/*
+ * utils: basic utility functions for the SCULL Language
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "utils.h"
 
 #include <assert.h>

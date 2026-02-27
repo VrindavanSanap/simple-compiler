@@ -1,3 +1,10 @@
+/*
+ * llvm_irgen: generates LLVM IR from the passed scull AST.
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "backend/llvm/llvm_irgen.hpp"
 #include "ast.h"
 

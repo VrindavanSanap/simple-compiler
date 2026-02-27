@@ -1,3 +1,10 @@
+/*
+ * stack: simple LIFO data structure implementation
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #ifndef STACK
 #define STACK
 

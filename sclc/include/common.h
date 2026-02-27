@@ -1,5 +1,8 @@
 /*
- * common.h: includes common typedefs used across sclc
+ * common: include common type definitions used across sclc
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef SCLC_COMMON_H

@@ -1,3 +1,10 @@
+/*
+ * backend: handles code generation, connects frontend to all backends
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "backend/backend.h"
 #include "backend/llvm/llvm.h"
 

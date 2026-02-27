@@ -1,5 +1,8 @@
 /*
- * llvm_irgen: LLVM IR Generation from the generated AST.
+ * llvm_irgen: generates LLVM IR from the passed scull AST.
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef LLVM_IRGEN_H

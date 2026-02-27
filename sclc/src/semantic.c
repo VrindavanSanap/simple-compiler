@@ -1,3 +1,10 @@
+/*
+ * semantic: variable checking and type checking for the SCULL Language
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "semantic.h"
 #include "ast.h"
 #include "ds/dynamic_array.h"

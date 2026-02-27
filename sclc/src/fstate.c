@@ -1,3 +1,10 @@
+/*
+ * fstate: per-file compilation data
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "fstate.h"
 #include "ast.h"
 #include "ds/dynamic_array.h"

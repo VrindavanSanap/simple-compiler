@@ -1,6 +1,8 @@
 /*
- * backend: code generation for sclc, initializes necessary functions based on
- * the selected target.
+ * backend: handles code generation, connects frontend to all backends
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef BACKEND_H

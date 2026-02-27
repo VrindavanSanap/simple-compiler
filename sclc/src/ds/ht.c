@@ -1,3 +1,10 @@
+/*
+ * ht: simple hash table implementation
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "ds/ht.h"
 #include "common.h"
 #include "utils.h"

@@ -1,3 +1,10 @@
+/*
+ * parser: recursive-descent parser for the SCULL language
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "parser.h"
 #include "ast.h"
 #include "common.h"

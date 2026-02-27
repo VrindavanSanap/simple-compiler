@@ -1,3 +1,10 @@
+/*
+ * lexer: for the SCULL language
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "lexer.h"
 #include "common.h"
 #include "ds/dynamic_array.h"

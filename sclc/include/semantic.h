@@ -1,6 +1,8 @@
 /*
- * semantic: semantic checking for the simple-compiler. Includes variable
- * checking and type checking.
+ * semantic: variable checking and type checking for the SCULL Language
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef SEMANTIC_H

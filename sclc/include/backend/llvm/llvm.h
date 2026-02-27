@@ -1,5 +1,8 @@
 /*
- * llvm: LLVM Backend for code generation
+ * llvm: acts as a link between sclc frontend and the llvm backend.
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
  */
 
 #ifndef LLVM_H

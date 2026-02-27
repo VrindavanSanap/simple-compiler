@@ -1,3 +1,10 @@
+/*
+ * llvm: acts as a link between sclc frontend and the llvm backend.
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "backend/llvm/llvm.h"
 #include "backend/llvm/ld_utils.hpp"
 #include "backend/llvm/llvm_irgen.hpp"

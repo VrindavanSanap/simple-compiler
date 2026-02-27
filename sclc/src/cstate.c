@@ -1,3 +1,11 @@
+/*
+ * cstate: Per-binary compilation state, groups all variables and options for
+ * one build unit.
+ *
+ * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
+ * Licensed under the GNU/GPL Version 3
+ */
+
 #include "cstate.h"
 #include "backend/backend.h"
 #include "common.h"
