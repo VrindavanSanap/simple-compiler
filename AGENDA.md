@@ -15,6 +15,7 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 ### Build System, Tooling, Infrastructure & UX
 
 - [x] NEC Better arena implementation with chaining
+- [ ] NEC Use arenas in data structures
 - [x] NEC Only emit output file in current directory unless specified with `-c`, else use `/tmp`
 - [x] NEC Add `-O` cli option
 - [x] NEC Separate backend from frontend, clean backend interface in `src/sclc.c`
