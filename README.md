@@ -20,10 +20,12 @@ Compile and run:
 $ git clone https://github.com/smyk07/scull.git
 $ cd scull
 
-# build sclc
+# build llvm and sclc
 $ mkdir build && cd build
 $ cmake ..
-$ cmake --build .
+$ cmake --build . --target llvm_project
+$ cmake ..
+$ cmake --build . --target sclc
 
 # compile the program
 $ ./build/bin/sclc -i ./lib hello.scl

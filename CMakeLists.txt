@@ -11,9 +11,6 @@ include(ExternalProject)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_COMPILER   clang  CACHE STRING "")
-set(CMAKE_CXX_COMPILER clang++ CACHE STRING "")
-
 ##########
 #  LLVM  #
 ##########
@@ -23,7 +20,6 @@ set(LLVM_BUILD_DIR  ${CMAKE_SOURCE_DIR}/external/llvm-project/build)
 set(LLVM_LIB        ${LLVM_BUILD_DIR}/lib)
 set(LLVM_INC        ${LLVM_BUILD_DIR}/include)
 set(LLVM_CONFIG     ${LLVM_BUILD_DIR}/bin/llvm-config)
-set(LLVM_SENTINEL   ${LLVM_LIB}/libLLVM.so)
 
 add_custom_target(llvm-sync
   COMMAND git submodule sync --recursive
@@ -58,12 +54,6 @@ ExternalProject_Add(llvm_project
   BUILD_BYPRODUCTS ${LLVM_SENTINEL}
   STAMP_DIR        ${CMAKE_BINARY_DIR}/llvm-stamps
 )
-
-if(NOT EXISTS ${LLVM_SENTINEL})
-  message(STATUS "[INFO] LLVM not built yet — only llvm-sync and llvm_project are available.")
-  message(STATUS "[INFO] Build LLVM first, then re-run cmake to configure sclc targets.")
-  return()
-endif()
 
 execute_process(COMMAND ${LLVM_CONFIG} --cxxflags
   OUTPUT_VARIABLE _LLVM_CXXFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
