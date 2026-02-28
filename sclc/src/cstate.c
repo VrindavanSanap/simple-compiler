@@ -30,6 +30,8 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
      * Should list out each option and a short description.
      * Take care of wrapping after ~80 characters.
      */
+
+  display_help_prompt:
     printf("SCULL Compiler\n");
     printf("Usage: %s [OPTIONS] <input_files>\n\n", argv[0]);
 
@@ -58,6 +60,8 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
 
     printf("\n");
 
+    printf("--help                        OR  -h  Display this help prompt\n");
+
     /*
     printf("Available Targets:\n");
     for (int i = 0; i <= TARGET_C; i++) {
@@ -66,7 +70,7 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
     printf("\n");
     */
 
-    exit(1);
+    exit(0);
   }
 
   u32 i = 1;
@@ -88,7 +92,6 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
 
       if (i + 1 >= argc) {
         scu_perror("Missing target after %s\n", arg);
-        free(cst);
         exit(1);
       }
 
@@ -102,7 +105,6 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
 
         if (err)
           LLVMDisposeMessage(err);
-        free(cst);
         exit(1);
       }
 
@@ -120,13 +122,11 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
     if (strcmp(arg, "--output") == 0 || strcmp(arg, "-o") == 0) {
       if (i + 1 >= argc) {
         scu_perror("Missing filename after %s\n", arg);
-        free(cst);
         exit(1);
       }
 
       if (cst->output_filepath != NULL) {
         scu_perror("Output specified more than once: %s\n", argv[i + 1]);
-        free(cst);
         exit(1);
       }
 
@@ -145,27 +145,23 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
     if (strcmp(arg, "--include_dir") == 0 || strcmp(arg, "-i") == 0) {
       if (i + 1 >= argc) {
         scu_perror("Missing directory path after %s\n", arg);
-        free(cst);
         exit(1);
       }
 
       if (cst->include_dir != NULL) {
         scu_perror("Include directory specified more than once: %s\n",
                    argv[i + 1]);
-        free(cst);
         exit(1);
       }
 
       struct stat st;
       if (stat(argv[i + 1], &st) != 0) {
         scu_perror("Include directory does not exist: %s\n", argv[i + 1]);
-        free(cst);
         exit(1);
       }
 
       if (!S_ISDIR(st.st_mode)) {
         scu_perror("Path is not a directory: %s\n", argv[i + 1]);
-        free(cst);
         exit(1);
       }
 
@@ -239,8 +235,11 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
       continue;
     }
 
+    if (strcmp(arg, "--help") == 0 || strcmp(arg, "-h") == 0) {
+      goto display_help_prompt;
+    }
+
     scu_perror("Unknown option: %s\n", arg);
-    free(cst);
     exit(1);
   }
 
@@ -249,7 +248,6 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
 
   if (filenames.count == 0) {
     scu_perror("Missing input filename\n");
-    free(cst);
     exit(1);
   }
 
@@ -259,7 +257,6 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
     cst->output_filepath = scu_extract_name(first_filename);
     if (!cst->output_filepath) {
       scu_perror("Failed to extract filename.\n");
-      free(cst);
       exit(1);
     }
   }
