@@ -21,14 +21,17 @@ set(LLVM_LIB        ${LLVM_BUILD_DIR}/lib)
 set(LLVM_INC        ${LLVM_BUILD_DIR}/include)
 set(LLVM_CONFIG     ${LLVM_BUILD_DIR}/bin/llvm-config)
 
-add_custom_target(llvm-sync
-  COMMAND git submodule sync --recursive
-  COMMAND git submodule update --init --recursive --depth 1
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  COMMENT "[LLVM] Submodule synced"
-)
-
 cmake_host_system_information(RESULT NPROC QUERY NUMBER_OF_LOGICAL_CORES)
+
+if(NOT EXISTS ${LLVM_SOURCE_DIR}/CMakeLists.txt)
+  message(STATUS "[LLVM] Syncing submodule...")
+  execute_process(
+    COMMAND git submodule sync --recursive
+    COMMAND git submodule update --init --recursive --depth 1
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+endif()
 
 ExternalProject_Add(llvm_project
   SOURCE_DIR       ${LLVM_SOURCE_DIR}
