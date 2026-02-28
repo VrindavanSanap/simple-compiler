@@ -3,28 +3,16 @@
 fn rule110(int left, int center, int right) : int {
   int pattern = (left * 4) + (center * 2) + right
 
-  if pattern == 7 {
-    return 0    -- 111
+  match pattern {
+    7 => return 0
+    6 => return 1
+    5 => return 1
+    4 => return 0
+    3 => return 1
+    2 => return 1
+    1 => return 1
+    _ => return 0
   }
-  if pattern == 6 {
-    return 1    -- 110
-  }
-  if pattern == 5 {
-    return 1    -- 101
-  }
-  if pattern == 4 {
-    return 0    -- 100
-  }
-  if pattern == 3 {
-    return 1    -- 011
-  }
-  if pattern == 2 {
-    return 1    -- 010
-  }
-  if pattern == 1 {
-    return 1    -- 001
-  }
-  return 0      -- 000
 }
 
 fn main() : int {
