@@ -2,8 +2,7 @@
 
 <img src="logo/logo.jpg" alt="SCULL Logo" height="150" title="Thanks, Vismita!">
 
-A C and Go like systems level programming language. Final name yet to be decided.
-Only linux systems are supported for now.
+Yet another systems programming language.
 
 ```
 -include "io.scl"
@@ -21,14 +20,13 @@ Compile and run:
 $ git clone https://github.com/smyk07/scull.git
 $ cd scull
 
-# sync submodules and build llvm
-$ make llvm-sync llvm
-
 # build sclc
-$ make
+$ mkdir build && cd build
+$ cmake ..
+$ cmake --build .
 
 # compile the program
-$ ./bin/sclc -i ./lib hello.scl
+$ ./build/bin/sclc -i ./lib hello.scl
 
 # run the compiled binary
 $ ./hello
@@ -42,12 +40,8 @@ More examples in `./examples`.
 - [The Go Programming Language](https://go.dev)
 - [How to build a compiler from scratch by Alex The Dev](https://youtu.be/HOe2YFnzO2I)
 
-## Prerequisites for building
+## Prerequisites
 
-- [`make`](https://www.gnu.org/software/make)
-- [`clang`](https://clang.llvm.org)
-- [`bear`](https://github.com/rizsotto/Bear) (for `compile_commands.json`)
-
-## Tools required
-
-- [`lld`](https://lld.llvm.org/) (for linking)
+- [`cmake`](https://cmake.org) (3.20+)
+- [`clang`](https://clang.llvm.org) (falls back to `cc`/`c++` if not found)
+- [`ninja`](https://ninja-build.org)
