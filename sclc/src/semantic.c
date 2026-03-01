@@ -15,7 +15,6 @@
 #include <inttypes.h>
 #include <stddef.h>
 
-#define _POSIX_C_SOURCE 200809L
 #include <string.h>
 
 u32 evaluate_const_expr(expr_node *expr) {
