@@ -18,7 +18,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(LLVM_SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/llvm-project/llvm)
 set(LLVM_BUILD_DIR  ${CMAKE_SOURCE_DIR}/external/llvm-project/build)
 set(LLVM_LIB        ${LLVM_BUILD_DIR}/lib)
-set(LLVM_INC        ${LLVM_BUILD_DIR}/include)
+set(LLVM_INC        
+  ${LLVM_BUILD_DIR}/include
+  ${LLVM_SOURCE_DIR}/include
+)
 set(LLVM_CONFIG     ${LLVM_BUILD_DIR}/bin/llvm-config)
 
 cmake_host_system_information(RESULT NPROC QUERY NUMBER_OF_LOGICAL_CORES)
