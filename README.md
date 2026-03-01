@@ -28,7 +28,7 @@ $ cmake ..
 $ cmake --build . --target sclc
 
 # compile the program
-$ ./build/bin/sclc -i ./lib hello.scl
+$ ./build/sclc-bin/sclc -i ./lib hello.scl
 
 # run the compiled binary
 $ ./hello
