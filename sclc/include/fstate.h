@@ -9,10 +9,11 @@
 #define FSTATE_H
 
 #include "ast.h"
-#include "common.h"
-#include "ds/dynamic_array.h"
-#include "ds/ht.h"
-#include "ds/stack.h"
+
+#include "core/common.h"
+#include "core/ds/dynamic_array.h"
+#include "core/ds/ht.h"
+#include "core/ds/stack.h"
 
 typedef struct fstate {
   /*

@@ -3,6 +3,9 @@
 !/sclc/
 !/sclc/**
 
+!/core/
+!/core/**
+
 !/lib/
 !/lib/**
 

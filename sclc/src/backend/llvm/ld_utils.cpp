@@ -8,7 +8,7 @@
 #include "backend/llvm/ld_utils.hpp"
 
 extern "C" {
-#include "utils.h"
+#include "core/utils.h"
 }
 
 #include <cstdio>

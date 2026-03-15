@@ -8,7 +8,7 @@
 #ifndef HT_H
 #define HT_H
 
-#include "common.h"
+#include "core/common.h"
 
 /*
  * @struct ht_item: represents an individual item inside a hash table.

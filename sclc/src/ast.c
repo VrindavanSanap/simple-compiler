@@ -6,10 +6,11 @@
  */
 
 #include "ast.h"
-#include "common.h"
-#include "ds/arena.h"
-#include "ds/dynamic_array.h"
-#include "ds/ht.h"
+
+#include "core/common.h"
+#include "core/ds/arena.h"
+#include "core/ds/dynamic_array.h"
+#include "core/ds/ht.h"
 
 #include <inttypes.h>
 #include <stdio.h>

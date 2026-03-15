@@ -5,9 +5,9 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "ds/ht.h"
-#include "common.h"
-#include "utils.h"
+#include "core/ds/ht.h"
+#include "core/common.h"
+#include "core/utils.h"
 
 #include <math.h>
 #include <stdlib.h>

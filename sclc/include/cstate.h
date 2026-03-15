@@ -9,9 +9,9 @@
 #ifndef CSTATE_H
 #define CSTATE_H
 
-#include "common.h"
-#include "ds/arena.h"
-#include "ds/dynamic_array.h"
+#include "core/common.h"
+#include "core/ds/arena.h"
+#include "core/ds/dynamic_array.h"
 
 /*
  * @enum opt_level: represents optimization levels

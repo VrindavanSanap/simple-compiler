@@ -10,7 +10,7 @@
 #ifndef ARENA_H
 #define ARENA_H
 
-#include "common.h"
+#include "core/common.h"
 
 typedef struct mem_arena_block {
   u64 capacity;

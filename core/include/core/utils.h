@@ -8,7 +8,7 @@
 #ifndef UTILS
 #define UTILS
 
-#include "common.h"
+#include "core/common.h"
 
 /*
  * @brief: allocates memory with error checking.

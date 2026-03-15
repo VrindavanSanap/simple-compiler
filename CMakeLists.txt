@@ -70,6 +70,26 @@ separate_arguments(LLVM_CXXFLAGS    UNIX_COMMAND ${_LLVM_CXXFLAGS})
 separate_arguments(LLVM_SYSTEM_LIBS UNIX_COMMAND ${_LLVM_SYSTEM_LIBS})
 
 ###########
+#  core   #
+###########
+
+set(CORE_INC_DIR ${CMAKE_SOURCE_DIR}/core/include)
+set(CORE_SRC_DIR ${CMAKE_SOURCE_DIR}/core/src)
+
+file(GLOB_RECURSE CORE_C_SRCS   CONFIGURE_DEPENDS ${CORE_SRC_DIR}/*.c)
+file(GLOB_RECURSE CORE_CXX_SRCS CONFIGURE_DEPENDS ${CORE_SRC_DIR}/*.cpp)
+
+add_library(core STATIC ${CORE_C_SRCS} ${CORE_CXX_SRCS})
+
+set_target_properties(core PROPERTIES
+  C_STANDARD            23
+  CXX_STANDARD          17
+  CXX_STANDARD_REQUIRED ON
+)
+
+target_include_directories(core PUBLIC ${CORE_INC_DIR})
+
+###########
 #  sclc   #
 ###########
 
@@ -103,7 +123,7 @@ function(add_sclc_target NAME OUTDIR)
   )
 
   target_link_directories(${NAME} PRIVATE ${LLVM_LIB})
-  target_link_libraries(${NAME} PRIVATE LLVM ${LLVM_SYSTEM_LIBS} m)
+  target_link_libraries(${NAME} PRIVATE core LLVM ${LLVM_SYSTEM_LIBS} m)
 
   add_dependencies(${NAME} llvm_project)
 endfunction()

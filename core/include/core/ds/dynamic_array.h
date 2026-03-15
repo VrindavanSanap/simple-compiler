@@ -8,7 +8,7 @@
 #ifndef DYNAMIC_ARRAY
 #define DYNAMIC_ARRAY
 
-#include "common.h"
+#include "core/common.h"
 
 typedef struct dynamic_array {
   void *items;

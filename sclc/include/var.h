@@ -8,8 +8,8 @@
 #ifndef VAR
 #define VAR
 
-#include "common.h"
-#include "ds/ht.h"
+#include "core/common.h"
+#include "core/ds/ht.h"
 
 /*
  * @enum type: represents data types.

@@ -7,13 +7,14 @@
 
 #include "parser.h"
 #include "ast.h"
-#include "common.h"
-#include "ds/arena.h"
-#include "ds/dynamic_array.h"
-#include "ds/ht.h"
 #include "token.h"
-#include "utils.h"
 #include "var.h"
+
+#include "core/common.h"
+#include "core/ds/arena.h"
+#include "core/ds/dynamic_array.h"
+#include "core/ds/ht.h"
+#include "core/utils.h"
 
 static mem_arena *ast_arena;
 

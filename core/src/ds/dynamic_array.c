@@ -5,9 +5,9 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "ds/dynamic_array.h"
-#include "common.h"
-#include "utils.h"
+#include "core/ds/dynamic_array.h"
+#include "core/common.h"
+#include "core/utils.h"
 
 #include <stdlib.h>
 #include <string.h>

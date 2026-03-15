@@ -6,8 +6,9 @@
  */
 
 #include "var.h"
-#include "common.h"
-#include "utils.h"
+
+#include "core/common.h"
+#include "core/utils.h"
 
 type get_var_type(ht *variables, variable *var_to_find) {
   if (!variables || !var_to_find || !var_to_find->name)

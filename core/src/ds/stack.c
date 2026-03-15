@@ -5,9 +5,9 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "ds/stack.h"
-#include "common.h"
-#include "utils.h"
+#include "core/ds/stack.h"
+#include "core/common.h"
+#include "core/utils.h"
 
 #include <stdlib.h>
 #include <string.h>

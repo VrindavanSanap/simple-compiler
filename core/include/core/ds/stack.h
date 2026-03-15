@@ -8,7 +8,7 @@
 #ifndef STACK
 #define STACK
 
-#include "common.h"
+#include "core/common.h"
 
 typedef struct stack {
   void *items;

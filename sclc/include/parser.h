@@ -9,7 +9,8 @@
 #define PARSER_H
 
 #include "ast.h"
-#include "ds/dynamic_array.h"
+
+#include "core/ds/dynamic_array.h"
 
 /*
  * @brief: parses a dynamic_array of tokens into an AST.

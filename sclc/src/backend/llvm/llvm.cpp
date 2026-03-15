@@ -14,11 +14,12 @@
 extern "C" {
 #include "ast.h"
 #include "backend/llvm/llvm.h"
-#include "common.h"
 #include "cstate.h"
-#include "ds/dynamic_array.h"
 #include "fstate.h"
-#include "utils.h"
+
+#include "core/common.h"
+#include "core/ds/dynamic_array.h"
+#include "core/utils.h"
 }
 
 #include <llvm/IR/IRBuilder.h>

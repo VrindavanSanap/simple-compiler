@@ -7,10 +7,11 @@
 
 #include "semantic.h"
 #include "ast.h"
-#include "ds/dynamic_array.h"
-#include "ds/ht.h"
-#include "utils.h"
 #include "var.h"
+
+#include "core/ds/dynamic_array.h"
+#include "core/ds/ht.h"
+#include "core/utils.h"
 
 #include <inttypes.h>
 #include <stddef.h>

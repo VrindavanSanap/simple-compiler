@@ -8,8 +8,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "common.h"
-#include "ds/dynamic_array.h"
+#include "core/common.h"
+#include "core/ds/dynamic_array.h"
 
 /*
  * @struct lexer: maintains state of the lexer for tokenizing the source buffer.

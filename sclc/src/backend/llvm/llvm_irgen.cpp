@@ -9,10 +9,11 @@
 #include "ast.h"
 
 extern "C" {
-#include "common.h"
-#include "ds/dynamic_array.h"
-#include "utils.h"
 #include "var.h"
+
+#include "core/common.h"
+#include "core/ds/dynamic_array.h"
+#include "core/utils.h"
 }
 
 #include <inttypes.h>

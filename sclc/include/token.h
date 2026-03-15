@@ -8,8 +8,8 @@
 #ifndef TOKEN
 #define TOKEN
 
-#include "common.h"
-#include "ds/dynamic_array.h"
+#include "core/common.h"
+#include "core/ds/dynamic_array.h"
 
 /*
  * @enum token_kind: enumeration of all kinds of tokens supported by the lexer.

@@ -7,9 +7,9 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "ds/arena.h"
-#include "common.h"
-#include "utils.h"
+#include "core/ds/arena.h"
+#include "core/common.h"
+#include "core/utils.h"
 
 #include <stdalign.h>
 #include <stddef.h>

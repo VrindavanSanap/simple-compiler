@@ -8,11 +8,12 @@
 
 #include "cstate.h"
 #include "backend/backend.h"
-#include "common.h"
-#include "ds/arena.h"
-#include "ds/dynamic_array.h"
 #include "fstate.h"
-#include "utils.h"
+
+#include "core/common.h"
+#include "core/ds/arena.h"
+#include "core/ds/dynamic_array.h"
+#include "core/utils.h"
 
 #include <llvm-c/Core.h>
 #include <llvm-c/TargetMachine.h>

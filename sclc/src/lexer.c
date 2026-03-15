@@ -6,10 +6,11 @@
  */
 
 #include "lexer.h"
-#include "common.h"
-#include "ds/dynamic_array.h"
 #include "token.h"
-#include "utils.h"
+
+#include "core/common.h"
+#include "core/ds/dynamic_array.h"
+#include "core/utils.h"
 
 #include <ctype.h>
 #include <stddef.h>
