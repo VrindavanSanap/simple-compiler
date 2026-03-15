@@ -9,9 +9,10 @@
 #include "backend/backend.h"
 #include "cstate.h"
 #include "fstate.h"
-#include "lexer.h"
-#include "parser.h"
-#include "semantic.h"
+
+#include "frontend/lexer.h"
+#include "frontend/parser.h"
+#include "frontend/semantic.h"
 
 #include "core/ds/dynamic_array.h"
 #include "core/utils.h"

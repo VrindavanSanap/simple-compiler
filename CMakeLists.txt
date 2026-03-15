@@ -88,6 +88,29 @@ set_target_properties(core PROPERTIES
 )
 
 target_include_directories(core PUBLIC ${CORE_INC_DIR})
+add_dependencies(core llvm_project)
+
+###############
+#  frontend   #
+###############
+
+set(FRONTEND_INC_DIR ${CMAKE_SOURCE_DIR}/frontend/include)
+set(FRONTEND_SRC_DIR ${CMAKE_SOURCE_DIR}/frontend/src)
+
+file(GLOB_RECURSE FRONTEND_C_SRCS   CONFIGURE_DEPENDS ${FRONTEND_SRC_DIR}/*.c)
+file(GLOB_RECURSE FRONTEND_CXX_SRCS CONFIGURE_DEPENDS ${FRONTEND_SRC_DIR}/*.cpp)
+
+add_library(frontend STATIC ${FRONTEND_C_SRCS} ${FRONTEND_CXX_SRCS})
+
+set_target_properties(frontend PROPERTIES
+  C_STANDARD            23
+  CXX_STANDARD          17
+  CXX_STANDARD_REQUIRED ON
+)
+
+target_include_directories(frontend PUBLIC ${FRONTEND_INC_DIR})
+target_link_libraries(frontend PRIVATE core)
+add_dependencies(frontend llvm_project)
 
 ###########
 #  sclc   #
@@ -123,7 +146,7 @@ function(add_sclc_target NAME OUTDIR)
   )
 
   target_link_directories(${NAME} PRIVATE ${LLVM_LIB})
-  target_link_libraries(${NAME} PRIVATE core LLVM ${LLVM_SYSTEM_LIBS} m)
+  target_link_libraries(${NAME} PRIVATE core frontend LLVM ${LLVM_SYSTEM_LIBS} m)
 
   add_dependencies(${NAME} llvm_project)
 endfunction()

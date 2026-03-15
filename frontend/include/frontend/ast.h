@@ -8,8 +8,8 @@
 #ifndef AST
 #define AST
 
-#include "token.h"
-#include "var.h"
+#include "frontend/token.h"
+#include "frontend/var.h"
 
 #include "core/ds/arena.h"
 #include "core/ds/dynamic_array.h"

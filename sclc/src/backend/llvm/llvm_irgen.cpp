@@ -6,10 +6,10 @@
  */
 
 #include "backend/llvm/llvm_irgen.hpp"
-#include "ast.h"
 
 extern "C" {
-#include "var.h"
+#include "frontend/ast.h"
+#include "frontend/var.h"
 
 #include "core/common.h"
 #include "core/ds/dynamic_array.h"

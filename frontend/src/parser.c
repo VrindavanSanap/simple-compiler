@@ -5,10 +5,10 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "parser.h"
-#include "ast.h"
-#include "token.h"
-#include "var.h"
+#include "frontend/parser.h"
+#include "frontend/ast.h"
+#include "frontend/token.h"
+#include "frontend/var.h"
 
 #include "core/common.h"
 #include "core/ds/arena.h"

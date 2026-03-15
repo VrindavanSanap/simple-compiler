@@ -5,7 +5,7 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "token.h"
+#include "frontend/token.h"
 
 #include <inttypes.h>
 #include <stdio.h>

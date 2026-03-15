@@ -8,7 +8,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "ast.h"
+#include "frontend/ast.h"
 
 #include "core/ds/dynamic_array.h"
 

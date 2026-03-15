@@ -5,8 +5,8 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "lexer.h"
-#include "token.h"
+#include "frontend/lexer.h"
+#include "frontend/token.h"
 
 #include "core/common.h"
 #include "core/ds/dynamic_array.h"

@@ -5,7 +5,7 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "ast.h"
+#include "frontend/ast.h"
 
 #include "core/common.h"
 #include "core/ds/arena.h"

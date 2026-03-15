@@ -8,7 +8,7 @@
 #ifndef FSTATE_H
 #define FSTATE_H
 
-#include "ast.h"
+#include "frontend/ast.h"
 
 #include "core/common.h"
 #include "core/ds/dynamic_array.h"

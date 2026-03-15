@@ -9,7 +9,7 @@
 #define LLVM_IRGEN_H
 
 extern "C" {
-#include "ast.h"
+#include "frontend/ast.h"
 }
 
 #include <llvm/IR/IRBuilder.h>

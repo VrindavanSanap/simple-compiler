@@ -6,8 +6,9 @@
  */
 
 #include "fstate.h"
-#include "ast.h"
-#include "var.h"
+
+#include "frontend/ast.h"
+#include "frontend/var.h"
 
 #include "core/ds/dynamic_array.h"
 #include "core/ds/ht.h"

@@ -5,9 +5,9 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "semantic.h"
-#include "ast.h"
-#include "var.h"
+#include "frontend/semantic.h"
+#include "frontend/ast.h"
+#include "frontend/var.h"
 
 #include "core/ds/dynamic_array.h"
 #include "core/ds/ht.h"

@@ -5,17 +5,15 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "backend/llvm/llvm.h"
 #include "backend/llvm/ld_utils.hpp"
 #include "backend/llvm/llvm_irgen.hpp"
-#include <filesystem>
-#include <stddef.h>
 
 extern "C" {
-#include "ast.h"
 #include "backend/llvm/llvm.h"
 #include "cstate.h"
 #include "fstate.h"
+
+#include "frontend/ast.h"
 
 #include "core/common.h"
 #include "core/ds/dynamic_array.h"
@@ -36,6 +34,8 @@ extern "C" {
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/TargetParser/Host.h>
 #include <llvm/TargetParser/Triple.h>
+
+#include <filesystem>
 
 typedef struct llvm_backend_ctx llvm_backend_ctx;
 
