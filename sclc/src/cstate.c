@@ -6,9 +6,9 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "cstate.h"
-#include "backend/backend.h"
-#include "fstate.h"
+#include "sclc/cstate.h"
+#include "sclc/backend/backend.h"
+#include "sclc/fstate.h"
 
 #include "core/common.h"
 #include "core/ds/arena.h"

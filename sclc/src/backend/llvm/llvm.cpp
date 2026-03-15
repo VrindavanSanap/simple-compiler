@@ -5,13 +5,13 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "backend/llvm/ld_utils.hpp"
-#include "backend/llvm/llvm_irgen.hpp"
+#include "sclc/backend/llvm/ld_utils.hpp"
+#include "sclc/backend/llvm/llvm_irgen.hpp"
 
 extern "C" {
-#include "backend/llvm/llvm.h"
-#include "cstate.h"
-#include "fstate.h"
+#include "sclc/backend/llvm/llvm.h"
+#include "sclc/cstate.h"
+#include "sclc/fstate.h"
 
 #include "frontend/ast.h"
 

@@ -6,9 +6,9 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "backend/backend.h"
-#include "cstate.h"
-#include "fstate.h"
+#include "sclc/backend/backend.h"
+#include "sclc/cstate.h"
+#include "sclc/fstate.h"
 
 #include "frontend/lexer.h"
 #include "frontend/parser.h"

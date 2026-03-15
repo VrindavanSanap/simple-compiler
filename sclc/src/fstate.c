@@ -5,7 +5,7 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "fstate.h"
+#include "sclc/fstate.h"
 
 #include "frontend/ast.h"
 #include "frontend/var.h"

@@ -12,8 +12,8 @@
 extern "C" {
 #endif
 
-#include "cstate.h"
-#include "fstate.h"
+#include "sclc/cstate.h"
+#include "sclc/fstate.h"
 
 /*
  * @brief: Initializes the LLVM backend for compilation.

@@ -5,7 +5,7 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "backend/llvm/llvm_irgen.hpp"
+#include "sclc/backend/llvm/llvm_irgen.hpp"
 
 extern "C" {
 #include "frontend/ast.h"

@@ -5,8 +5,8 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "backend/backend.h"
-#include "backend/llvm/llvm.h"
+#include "sclc/backend/backend.h"
+#include "sclc/backend/llvm/llvm.h"
 
 #include <stdlib.h>
 
