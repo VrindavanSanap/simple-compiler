@@ -17,8 +17,8 @@ typedef struct backend {
                               // which we are providing an abstract layer
 
   void (*compile)(cstate *cst, fstate *fst);  // Compile a single file
-  void (*emit)(cstate *cst, fstate *fst);     // Optimize IR
-  void (*optimize)(cstate *cst, fstate *fst); // Emit object file
+  void (*optimize)(cstate *cst, fstate *fst); // Optimize IR
+  void (*emit)(cstate *cst, fstate *fst);     // Emit object file
   void (*cleanup)(cstate *cst, fstate *fst);  // cleanup file specific resources
 
   void (*link)(cstate *cst); // link all object files
