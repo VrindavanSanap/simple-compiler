@@ -34,6 +34,8 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 ### Frontend
 
+- [ ] NEC Source Location field in AST
+
 - [ ] NEC Parser refactor
   - reduce pre-defined parsables into instructions, rather than the existing
   - will follow a similar top-down approach but would be better to add features to and read
@@ -45,8 +47,6 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 - [ ] NEC Develop C Backend
   - Language changes for 1:1 C translation needed
   - Basic types, structs, unions, enums, memory management, etc.
-
-- [ ] EXP Optional cosmopolitan backend for generating fat binaries
 
 ### Distribution
 
