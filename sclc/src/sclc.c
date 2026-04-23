@@ -22,7 +22,7 @@
 int main(int argc, char *argv[]) {
   // Initialize compiler state
   cstate cst = {0};
-  cstate_init(&cst, (u32)argc, argv);
+  cstate_init(&cst, argc, argv);
 
   backend backend;
   backend_init(&backend, &cst);
