@@ -12,10 +12,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define STACK_INITIAL_CAPACITY 4
+#define STACK_RESIZE_FACTOR 2
+
 u32 stack_init(stack *s, u64 item_size) {
   if (!s) {
     scu_perror("Invalid stack pointer passed to stack_init.\n");
-    return -1;
+    return 1;
   }
   s->item_size = item_size;
   s->capacity = STACK_INITIAL_CAPACITY;
@@ -27,11 +30,11 @@ u32 stack_init(stack *s, u64 item_size) {
 static u32 stack_expand(stack *s) {
   if (!s) {
     scu_perror("Invalid stack pointer passed to stack_expand.\n");
-    return -1;
+    return 1;
   }
   if (!s->items) {
     scu_perror("Uninitialized stack passed to stack_expand.\n");
-    return -1;
+    return 1;
   }
   u64 new_capacity = s->capacity * STACK_RESIZE_FACTOR;
   void *new_items = scu_checked_realloc(s->items, s->item_size * new_capacity);
@@ -43,11 +46,11 @@ static u32 stack_expand(stack *s) {
 static u32 stack_shrink(stack *s) {
   if (!s) {
     scu_perror("Invalid stack pointer passed to stack_shrink.\n");
-    return -1;
+    return 1;
   }
   if (!s->items) {
     scu_perror("Uninitialized stack passed to stack_shrink.\n");
-    return -1;
+    return 1;
   }
   u64 new_capacity = s->capacity / STACK_RESIZE_FACTOR;
   if (new_capacity < STACK_INITIAL_CAPACITY) {
@@ -62,18 +65,18 @@ static u32 stack_shrink(stack *s) {
 u32 stack_push(stack *s, void *item) {
   if (!s || !item) {
     scu_perror("Invalid parameter passed to stack_push.\n");
-    return -1;
+    return 1;
   }
 
   if (!s->items || s->item_size == 0) {
     scu_perror("Uninitialized stack passed to stack_push.\n");
-    return -1;
+    return 1;
   }
 
   if (s->count == s->capacity) {
     if (stack_expand(s) != 0) {
       scu_perror("Stack resize failed in stack_push.\n");
-      return -1;
+      return 1;
     }
   }
 
@@ -85,17 +88,17 @@ u32 stack_push(stack *s, void *item) {
 u32 stack_pop(stack *s, void *item) {
   if (!s || !item) {
     scu_perror("Invalid parameter passed to stack_pop.\n");
-    return -1;
+    return 1;
   }
 
   if (!s->items || s->item_size == 0) {
     scu_perror("Uninitialized stack passed to stack_pop.\n");
-    return -1;
+    return 1;
   }
 
   if (s->count == 0) {
     scu_perror("Cannot pop from empty stack.\n");
-    return -1;
+    return 1;
   }
 
   memcpy(item, (char *)s->items + ((s->count - 1) * s->item_size),
@@ -105,7 +108,7 @@ u32 stack_pop(stack *s, void *item) {
   if (s->count < (s->capacity / STACK_RESIZE_FACTOR)) {
     if (stack_shrink(s) != 0) {
       scu_perror("Stack resize failed in stack_pop.\n");
-      return -1;
+      return 1;
     }
   }
 

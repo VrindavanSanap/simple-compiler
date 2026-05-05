@@ -5,8 +5,8 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#ifndef STACK
-#define STACK
+#ifndef STACK_H
+#define STACK_H
 
 #include "core/common.h"
 
@@ -17,17 +17,50 @@ typedef struct stack {
   u64 capacity;
 } stack;
 
-#define STACK_INITIAL_CAPACITY 4
-#define STACK_RESIZE_FACTOR 2
-
+/*
+ * @brief: Initializes an already allocated stack with the specified item size.
+ *
+ * @param s: pointer to a stack
+ * @param item_size: size of each element in bytes
+ *
+ * @return: 0 if successful, 1 on allocation failure
+ */
 u32 stack_init(stack *s, u64 item_size);
 
+/*
+ * @brief: Pushes an item onto the stack.
+ *
+ * @param s: pointer to a stack
+ * @param item: pointer to the item to push
+ *
+ * @return: 0 if successful, 1 on allocation failure
+ */
 u32 stack_push(stack *s, void *item);
 
+/*
+ * @brief: Pops and returns the top item from the stack.
+ *
+ * @param s: pointer to a stack
+ * @param item: pointer to store the popped item
+ *
+ * @return: 0 if successful, 1 if stack is empty
+ */
 u32 stack_pop(stack *s, void *item);
 
+/*
+ * @brief: Returns the top item without popping.
+ *
+ * @param s: pointer to a stack
+ *
+ * @return: pointer to top item, or NULL if stack is empty
+ */
 void *stack_top(stack *s);
 
+/*
+ * @brief: Frees the stack structure.
+ *
+ * @param s: pointer to a stack
+ */
 void stack_free(stack *s);
 
-#endif // !STACK
+#endif // !STACK_H
