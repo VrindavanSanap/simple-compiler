@@ -14,9 +14,8 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 ### Build System, Tooling, Infrastructure & UX
 
-- [ ] NEC Use arenas in data structures
 - [ ] NEC Add option to parse and use -o before/after -c for specifying where the object file should be stored
-- [ ] NEC Seperart frontend (lexer, parser, semantic), core (data structures, common.h), and sclc (cstate, fstate, backend)
+- [x] NEC Seperate frontend (lexer, parser, semantic), core (data structures, common.h), and sclc (cstate, fstate, backend)
 
 ### Error Handling & Debugging
 
