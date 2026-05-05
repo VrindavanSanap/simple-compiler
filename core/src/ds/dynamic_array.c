@@ -22,7 +22,7 @@ void dynamic_array_init(dynamic_array *da, u64 size) {
 u32 dynamic_array_get(dynamic_array *da, u64 index, void *item) {
   if (!da || !item || index >= da->count || !da->items) {
     scu_perror("Invalid Dynamic array passed to function.\n");
-    return -1;
+    return 1;
   }
 
   void *src = (char *)da->items + (index * da->item_size);
@@ -34,7 +34,7 @@ u32 dynamic_array_set(dynamic_array *da, u64 index, void *item) {
   if (!da || !item || !da->items || da->item_size == 0 || index >= da->count ||
       da->capacity == 0) {
     scu_perror("Invalid dynamic array passed to function.\n");
-    return -1;
+    return 1;
   }
 
   void *dest = (char *)da->items + (index * da->item_size);
@@ -45,7 +45,7 @@ u32 dynamic_array_set(dynamic_array *da, u64 index, void *item) {
 u32 dynamic_array_append(dynamic_array *da, void *item) {
   if (!da || !item || da->item_size == 0) {
     scu_perror("Invalid dynamic array passed to function.\n");
-    return -1;
+    return 1;
   }
 
   if (da->capacity == 0) {
@@ -53,7 +53,7 @@ u32 dynamic_array_append(dynamic_array *da, void *item) {
     da->items = scu_checked_malloc(da->item_size * da->capacity);
     if (!da->items) {
       scu_perror("Failed to allocate dynamic array\n");
-      return -1;
+      return 1;
     }
   }
 
@@ -73,7 +73,7 @@ u32 dynamic_array_append(dynamic_array *da, void *item) {
 u32 dynamic_array_insert(dynamic_array *da, u64 index, void *item) {
   if (!da || !item || da->item_size == 0 || index > da->count) {
     scu_perror("Invalid dynamic array passed to function.\n");
-    return -1;
+    return 1;
   }
 
   if (da->count == da->capacity) {
@@ -95,7 +95,7 @@ u32 dynamic_array_insert(dynamic_array *da, u64 index, void *item) {
 u32 dynamic_array_remove(dynamic_array *da, u64 index) {
   if (!da || da->item_size == 0 || index >= da->count) {
     scu_perror("Invalid dynamic array passed to function.\n");
-    return -1;
+    return 1;
   }
 
   if (index != da->count - 1) {
@@ -111,7 +111,7 @@ u32 dynamic_array_remove(dynamic_array *da, u64 index) {
 u32 dynamic_array_pop(dynamic_array *da, void *item) {
   if (!da || da->item_size == 0 || da->count == 0) {
     scu_perror("Invalid dynamic array passed to function.\n");
-    return -1;
+    return 1;
   }
 
   u32 return_value = dynamic_array_get(da, da->count - 1, item);
