@@ -38,7 +38,7 @@ typedef struct coptions {
   /*
    * Write output to output_filename instead of the default filename.
    */
-  bool output;
+  bool explicit_output_specified;
 
   /*
    * Output object file only (compile but don't link)
@@ -50,6 +50,9 @@ typedef struct coptions {
    */
   bool include_dir_specified;
 
+  /*
+   * Weather target is specified explicitly.
+   */
   bool target_specified;
 
   /*
@@ -90,8 +93,8 @@ typedef struct cstate {
   dynamic_array obj_file_list;
 
   /*
-   * Path to the output file. default is extracted from the first filepath.
-   * Ex: main.sclc => main
+   * Path to the output file regardless of compile mode. Default is extracted
+   * from the first filepath. Ex: main.sclc => main
    */
   char *output_filepath;
 

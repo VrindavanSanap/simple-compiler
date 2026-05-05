@@ -43,8 +43,7 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
 
     printf("-c                                    Compile but do not link\n");
 
-    printf("--output <output_filename>    OR  -o  Specify output binary "
-           "filename.\n");
+    printf("--output <output_filename>    OR  -o  Specify output filename.\n");
 
     printf("--include_dir <path_to_dir>   OR  -i  Specify include directory "
            "path.\n");
@@ -132,7 +131,7 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
       }
 
       cst->output_filepath = strdup(argv[i + 1]);
-      cst->options.output = true;
+      cst->options.explicit_output_specified = true;
       i += 2;
       continue;
     }
@@ -252,6 +251,15 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
     exit(1);
   }
 
+  bool compile_mode = cst->options.compile_only || cst->options.emit_llvm ||
+                      cst->options.emit_asm;
+
+  if (compile_mode && cst->output_filepath != NULL && filenames.count > 1) {
+    scu_perror("-o cannot be used with multiple input files in compile mode. "
+               "Compile each file separately or remove -o\n");
+    exit(1);
+  }
+
   if (cst->output_filepath == NULL) {
     char *first_filename;
     dynamic_array_get(&filenames, 0, &first_filename);
@@ -276,10 +284,14 @@ void cstate_init(cstate *cst, u32 argc, char *argv[]) {
     u64 len;
     char *obj;
 
-    if (cst->options.compile_only) {
-      len = strlen(fst->extracted_filepath) + 3;
-      obj = scu_checked_malloc(len);
-      snprintf(obj, len, "%s.o", fst->extracted_filepath);
+    if (compile_mode) {
+      if (cst->output_filepath != NULL) {
+        obj = strdup(cst->output_filepath);
+      } else {
+        len = strlen(fst->extracted_filepath) + 3;
+        obj = scu_checked_malloc(len);
+        snprintf(obj, len, "%s.o", fst->extracted_filepath);
+      }
     } else {
       len = strlen(fst->extracted_filepath) + 13;
       obj = scu_checked_malloc(len);

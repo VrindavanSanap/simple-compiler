@@ -154,7 +154,14 @@ void llvm_backend_emit(cstate *cst, fstate *fst) {
   }
 
   if (cst->options.emit_llvm) {
-    std::string ir_filename = std::string(fst->extracted_filepath) + ".ll";
+    std::string ir_filename;
+
+    if (cst->options.explicit_output_specified) {
+      ir_filename = cst->output_filepath;
+    } else {
+      ir_filename = std::string(fst->extracted_filepath) + ".ll";
+    }
+
     llvm::raw_fd_ostream ir_file(ir_filename, ec, llvm::sys::fs::OF_None);
 
     if (!ec) {
@@ -169,7 +176,14 @@ void llvm_backend_emit(cstate *cst, fstate *fst) {
   }
 
   if (cst->options.emit_asm) {
-    std::string asm_filename = std::string(fst->extracted_filepath) + ".s";
+    std::string asm_filename;
+
+    if (cst->options.explicit_output_specified) {
+      asm_filename = cst->output_filepath;
+    } else {
+      asm_filename = std::string(fst->extracted_filepath) + ".s";
+    }
+
     llvm::raw_fd_ostream asm_dest(asm_filename, ec, llvm::sys::fs::OF_None);
 
     if (ec) {
@@ -192,9 +206,13 @@ void llvm_backend_emit(cstate *cst, fstate *fst) {
 
   std::string obj_filename;
 
-  if (cst->options.compile_only)
-    obj_filename = std::string(fst->extracted_filepath) + ".o";
-  else {
+  if (cst->options.compile_only) {
+    if (cst->options.explicit_output_specified) {
+      obj_filename = cst->output_filepath;
+    } else {
+      obj_filename = std::string(fst->extracted_filepath) + ".o";
+    }
+  } else {
     obj_filename = "/tmp/sclc/" + std::string(fst->extracted_filepath) + ".o";
 
     std::filesystem::path obj_path(obj_filename);
