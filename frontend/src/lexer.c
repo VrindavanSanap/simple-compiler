@@ -115,6 +115,23 @@ static void skip_whitespaces(lexer *l) {
 }
 
 /*
+ * @brief: Helper to avoid repeating slice -> owned string conversions (reading
+ * identifiers).
+ *
+ * @param l: pointer to lexer struct object.
+ */
+static char *lexer_read_identifier(lexer *l) {
+  string_slice slice = {.str = l->buffer + l->pos, .len = 0};
+  while (isalnum(l->ch) || l->ch == '_') {
+    slice.len += 1;
+    lexer_read_char(l);
+  }
+  char *value = NULL;
+  string_slice_to_owned(&slice, &value);
+  return value;
+}
+
+/*
  * @brief: Scans the buffer ahead and returns the next token.
  *
  * @param l: pointer to lexer struct object.
@@ -342,14 +359,7 @@ restart:
     }
 
     else if (isalpha(l->ch)) {
-      string_slice slice = {.str = l->buffer + l->pos, .len = 0};
-      while (isalnum(l->ch) || l->ch == '_') {
-        slice.len += 1;
-        lexer_read_char(l);
-      }
-
-      char *directive = NULL;
-      string_slice_to_owned(&slice, &directive);
+      char *directive = lexer_read_identifier(l);
 
       if (strcmp(directive, "include") == 0) {
         free(directive);
@@ -363,18 +373,14 @@ restart:
 
   else if (l->ch == '*') {
     lexer_read_char(l);
-    if (isalnum(l->ch) || l->ch == '_') {
-      string_slice slice = {.str = l->buffer + l->pos, .len = 0};
-      while (isalnum(l->ch) || l->ch == '_') {
-        slice.len += 1;
-        lexer_read_char(l);
-      }
-      char *value = NULL;
-      string_slice_to_owned(&slice, &value);
+    if (((*__ctype_b_loc())[(int)((l->ch))] & (unsigned short int)_ISalnum) ||
+        l->ch == '_') {
+      char *value = lexer_read_identifier(l);
       return (token){
           .kind = TOKEN_POINTER, .value.str = value, .line = l->line};
     }
-    return (token){.kind = TOKEN_MULTIPLY, .value.str = NULL, .line = l->line};
+    return (token){
+        .kind = TOKEN_MULTIPLY, .value.str = ((void *)0), .line = l->line};
   }
 
   else if (l->ch == '&') {
@@ -394,13 +400,7 @@ restart:
     lexer_read_char(l);
 
     if (isalnum(l->ch) || l->ch == '_') {
-      string_slice slice = {.str = l->buffer + l->pos, .len = 0};
-      while (isalnum(l->ch) || l->ch == '_') {
-        slice.len += 1;
-        lexer_read_char(l);
-      }
-      char *value = NULL;
-      string_slice_to_owned(&slice, &value);
+      char *value = lexer_read_identifier(l);
       return (token){.kind = TOKEN_LABEL, .value.str = value, .line = l->line};
     } else {
       return (token){.kind = TOKEN_COLON, .value.str = NULL, .line = l->line};
@@ -424,15 +424,7 @@ restart:
   }
 
   else if (isalnum(l->ch) || l->ch == '_') {
-    string_slice slice = {.str = l->buffer + l->pos, .len = 0};
-
-    while (isalnum(l->ch) || l->ch == '_') {
-      slice.len += 1;
-      lexer_read_char(l);
-    }
-
-    char *value = NULL;
-    string_slice_to_owned(&slice, &value);
+    char *value = lexer_read_identifier(l);
 
 #define LEX_KEYWORD(keyword_str, tok_kind)                                     \
   if (strcmp(value, keyword_str) == 0) {                                       \
@@ -471,10 +463,7 @@ restart:
   }
 
   else {
-    string_slice slice = {.str = l->buffer + l->pos, .len = 1};
-    char *value = NULL;
-    string_slice_to_owned(&slice, &value);
-    lexer_read_char(l);
+    char *value = lexer_read_identifier(l);
     return (token){.kind = TOKEN_INVALID, .value.str = value, .line = l->line};
   }
 }
