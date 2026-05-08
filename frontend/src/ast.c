@@ -112,6 +112,7 @@ static void check_expr_and_print(expr_node *expr) {
   case EXPR_TERM:
     check_term_and_print(&expr->term);
     break;
+
   case EXPR_ADD:
     printf("(");
     check_expr_and_print(expr->binary.left);
@@ -119,6 +120,7 @@ static void check_expr_and_print(expr_node *expr) {
     check_expr_and_print(expr->binary.right);
     printf(")");
     break;
+
   case EXPR_SUBTRACT:
     printf("(");
     check_expr_and_print(expr->binary.left);
@@ -126,6 +128,7 @@ static void check_expr_and_print(expr_node *expr) {
     check_expr_and_print(expr->binary.right);
     printf(")");
     break;
+
   case EXPR_MULTIPLY:
     printf("(");
     check_expr_and_print(expr->binary.left);
@@ -133,6 +136,7 @@ static void check_expr_and_print(expr_node *expr) {
     check_expr_and_print(expr->binary.right);
     printf(")");
     break;
+
   case EXPR_DIVIDE:
     printf("(");
     check_expr_and_print(expr->binary.left);
@@ -140,12 +144,18 @@ static void check_expr_and_print(expr_node *expr) {
     check_expr_and_print(expr->binary.right);
     printf(")");
     break;
+
   case EXPR_MODULO:
     printf("(");
     check_expr_and_print(expr->binary.left);
     printf(" %% ");
     check_expr_and_print(expr->binary.right);
     printf(")");
+    break;
+
+  case EXPR_UNARY_MINUS:
+    printf("-");
+    check_expr_and_print(expr->unary);
     break;
   }
 }
@@ -601,6 +611,7 @@ static void free_expr_node(expr_node *expr) {
   case EXPR_TERM:
     free_term_node(&expr->term);
     break;
+
   case EXPR_ADD:
   case EXPR_SUBTRACT:
   case EXPR_MULTIPLY:
@@ -608,6 +619,10 @@ static void free_expr_node(expr_node *expr) {
   case EXPR_MODULO:
     free_expr_node(expr->binary.left);
     free_expr_node(expr->binary.right);
+    break;
+
+  case EXPR_UNARY_MINUS:
+    free_expr_node(expr->unary);
     break;
   }
 }

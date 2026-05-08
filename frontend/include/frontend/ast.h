@@ -72,23 +72,18 @@ typedef struct term_node {
 } term_node;
 
 /*
- * @struct term_binary_node: represents a binary term.
- */
-typedef struct term_binary_node {
-  term_node lhs;
-  term_node rhs;
-} term_binary_node;
-
-/*
  * @enum expr_kind: enumeration of all the expressions supported by the parser.
  */
 typedef enum expr_kind {
   EXPR_TERM = 0,
+
   EXPR_ADD,
   EXPR_SUBTRACT,
   EXPR_MULTIPLY,
   EXPR_DIVIDE,
-  EXPR_MODULO
+  EXPR_MODULO,
+
+  EXPR_UNARY_MINUS,
 } expr_kind;
 
 /*
@@ -97,12 +92,16 @@ typedef enum expr_kind {
 typedef struct expr_node {
   expr_kind kind;
   u64 line;
+
   union {
     term_node term;
+
     struct {
       struct expr_node *left;
       struct expr_node *right;
     } binary;
+
+    struct expr_node *unary;
   };
 } expr_node;
 
@@ -118,6 +117,14 @@ typedef enum rel_kind {
   REL_GREATER_THAN,
   REL_GREATER_THAN_OR_EQUAL,
 } rel_kind;
+
+/*
+ * @struct term_binary_node: represents a binary term.
+ */
+typedef struct term_binary_node {
+  term_node lhs;
+  term_node rhs;
+} term_binary_node;
 
 /*
  * @struct rel_node: represents a relational expression.

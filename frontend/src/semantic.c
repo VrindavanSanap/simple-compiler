@@ -60,6 +60,10 @@ u32 evaluate_const_expr(expr_node *expr) {
     }
     return evaluate_const_expr(expr->binary.left) % right;
   }
+
+  case EXPR_UNARY_MINUS: {
+    return evaluate_const_expr(expr->unary);
+  }
   }
 }
 
@@ -189,6 +193,7 @@ static void expr_check_variables(expr_node *expr, ht *variables,
   case EXPR_TERM:
     term_check_variables(&expr->term, variables, functions);
     break;
+
   case EXPR_ADD:
   case EXPR_SUBTRACT:
   case EXPR_MULTIPLY:
@@ -197,6 +202,9 @@ static void expr_check_variables(expr_node *expr, ht *variables,
     expr_check_variables(expr->binary.left, variables, functions);
     expr_check_variables(expr->binary.right, variables, functions);
     break;
+
+  case EXPR_UNARY_MINUS:
+    expr_check_variables(expr->unary, variables, functions);
   }
 }
 
@@ -614,6 +622,7 @@ static type expr_type(expr_node *expr, type target_type, ht *variables,
   switch (expr->kind) {
   case EXPR_TERM:
     return term_type(&expr->term, variables, functions);
+
   case EXPR_ADD:
   case EXPR_SUBTRACT:
   case EXPR_MULTIPLY:
@@ -622,6 +631,9 @@ static type expr_type(expr_node *expr, type target_type, ht *variables,
     lhs = expr_type(expr->binary.left, target_type, variables, functions);
     rhs = expr_type(expr->binary.right, target_type, variables, functions);
     break;
+
+  case EXPR_UNARY_MINUS:
+    return expr_type(expr->unary, target_type, variables, functions);
   }
 
   if (lhs != rhs) {

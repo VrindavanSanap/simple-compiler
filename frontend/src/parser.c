@@ -68,6 +68,13 @@ static void parser_advance(parser *p) { p->index++; }
 static bool parse_instr(parser *p, instr_node *instr);
 
 /*
+ * @brief: parse a term. (declaration)
+ *
+ * @param p: pointer to the parser state.
+ */
+static expr_node *parse_term(parser *p);
+
+/*
  * @brief: parse a arithmetic expression. (declaration)
  *
  * @param p: pointer to the parser state.
@@ -165,6 +172,18 @@ static void parse_term_for_expr(parser *p, term_node *term) {
 static expr_node *parse_factor(parser *p) {
   token token = {0};
   parser_current(p, &token);
+
+  if (token.kind == TOKEN_SUBTRACT) {
+    parser_advance(p);
+    expr_node *operand = parse_term(p);
+
+    expr_node *node = arena_push_struct(ast_arena, expr_node);
+    node->kind = EXPR_UNARY_MINUS;
+    node->line = token.line;
+    node->unary = operand;
+    return node;
+  }
+
   if (token.kind == TOKEN_INT_LITERAL || token.kind == TOKEN_CHAR_LITERAL ||
       token.kind == TOKEN_IDENTIFIER || token.kind == TOKEN_POINTER ||
       token.kind == TOKEN_STRING_LITERAL || token.kind == TOKEN_ADDRESS_OF) {
@@ -177,29 +196,41 @@ static expr_node *parse_factor(parser *p) {
       node->term.value.integer = token.value.integer;
       parser_advance(p);
       return node;
-    } else if (token.kind == TOKEN_CHAR_LITERAL) {
+    }
+
+    else if (token.kind == TOKEN_CHAR_LITERAL) {
       node->term.kind = TERM_CHAR;
       node->term.value.character = token.value.character;
       parser_advance(p);
       return node;
-    } else if (token.kind == TOKEN_STRING_LITERAL) {
+    }
+
+    else if (token.kind == TOKEN_STRING_LITERAL) {
       node->term.kind = TERM_STRING;
       node->term.value.str = token.value.str;
       parser_advance(p);
       return node;
-    } else if (token.kind == TOKEN_IDENTIFIER) {
+    }
+
+    else if (token.kind == TOKEN_IDENTIFIER) {
       node->term.kind = TERM_IDENTIFIER;
       node->term.identifier.line = token.line;
       node->term.identifier.name = token.value.str;
+
       parser_advance(p);
       parser_current(p, &token);
+
       if (token.kind == TOKEN_LSQBR) {
         node->term.kind = TERM_ARRAY_ACCESS;
         node->term.array_access.array_var.name = node->term.identifier.name;
         node->term.array_access.array_var.line = node->term.identifier.line;
+
         parser_advance(p);
+
         node->term.array_access.index_expr = parse_expr(p);
+
         parser_current(p, &token);
+
         if (token.kind != TOKEN_RSQBR) {
           scu_perror("Expected ']' at line %d\n", token.line);
         }
@@ -229,20 +260,26 @@ static expr_node *parse_factor(parser *p) {
         parser_advance(p);
       }
       return node;
-    } else if (token.kind == TOKEN_POINTER) {
+    }
+
+    else if (token.kind == TOKEN_POINTER) {
       node->term.kind = TERM_DEREF;
       node->term.identifier.line = token.line;
       node->term.identifier.name = token.value.str;
       parser_advance(p);
       return node;
-    } else if (token.kind == TOKEN_ADDRESS_OF) {
+    }
+
+    else if (token.kind == TOKEN_ADDRESS_OF) {
       node->term.kind = TERM_ADDOF;
       node->term.identifier.line = token.line;
       node->term.identifier.name = token.value.str;
       parser_advance(p);
       return node;
     }
-  } else if (token.kind == TOKEN_LPAREN) {
+  }
+
+  else if (token.kind == TOKEN_LPAREN) {
     parser_advance(p);
     expr_node *node = parse_expr(p);
     parser_current(p, &token);
@@ -251,7 +288,9 @@ static expr_node *parse_factor(parser *p) {
     }
     parser_advance(p);
     return node;
-  } else {
+  }
+
+  else {
     scu_perror("Syntax error: expected term or '(' at line %d\n", token.line);
     scu_check_errors();
   }

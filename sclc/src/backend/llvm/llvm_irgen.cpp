@@ -243,6 +243,13 @@ static llvm::Value *llvm_irgen_expr(llvm_backend_ctx &ctx, expr_node *expr) {
       return nullptr;
     return ctx.builder->CreateSRem(lhs, rhs, "modtmp");
   }
+
+  case EXPR_UNARY_MINUS: {
+    llvm::Value *operand = llvm_irgen_expr(ctx, expr->unary);
+    if (!operand)
+      return nullptr;
+    return ctx.builder->CreateNeg(operand, "negtmp");
+  }
   }
 }
 
