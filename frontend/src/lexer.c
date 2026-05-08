@@ -315,12 +315,15 @@ restart:
 
   else if (l->ch == '-') {
     lexer_read_char(l);
+
     if (l->ch == '-') {
       while (l->ch != '\n') {
         lexer_read_char(l);
       }
       goto restart;
-    } else if (l->ch == '*') {
+    }
+
+    else if (l->ch == '*') {
       while (l->ch != '\0') {
         if (l->ch == '*') {
           lexer_read_char(l);
@@ -336,32 +339,25 @@ restart:
         return (token){
             .kind = TOKEN_INVALID, .value.character = l->ch, .line = l->line};
       }
-    } else if (isdigit(l->ch)) {
-      string_slice slice = {.str = l->buffer + l->pos, .len = 0};
-      while (isdigit(l->ch)) {
-        slice.len += 1;
-        lexer_read_char(l);
-      }
-      char *temp = NULL;
-      string_slice_to_owned(&slice, &temp);
-      u32 value = -atoi(temp);
-      free(temp);
-      return (token){
-          .kind = TOKEN_INT_LITERAL, .value.integer = value, .line = l->line};
-    } else if (isalnum(l->ch)) {
+    }
+
+    else if (isalpha(l->ch)) {
       string_slice slice = {.str = l->buffer + l->pos, .len = 0};
       while (isalnum(l->ch) || l->ch == '_') {
         slice.len += 1;
         lexer_read_char(l);
       }
+
       char *directive = NULL;
       string_slice_to_owned(&slice, &directive);
+
       if (strcmp(directive, "include") == 0) {
         free(directive);
         return (token){
             .kind = TOKEN_PDIR_INCLUDE, .value.str = NULL, .line = l->line};
       }
     }
+
     return (token){.kind = TOKEN_SUBTRACT, .value.str = NULL, .line = l->line};
   }
 
