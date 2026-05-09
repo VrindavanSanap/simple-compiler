@@ -69,6 +69,22 @@ execute_process(COMMAND ${LLVM_CONFIG} --system-libs
 separate_arguments(LLVM_CXXFLAGS    UNIX_COMMAND ${_LLVM_CXXFLAGS})
 separate_arguments(LLVM_SYSTEM_LIBS UNIX_COMMAND ${_LLVM_SYSTEM_LIBS})
 
+################
+# Build Types  #
+################
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+endif()
+
+set(_DEBUG_FLAGS  "-g -O0 -DDEBUG -Wall -Wextra")
+set(_RELEASE_FLAGS "-O2 -DNDEBUG -Wall -Werror -Wextra")
+
+set(CMAKE_C_FLAGS_DEBUG   "${_DEBUG_FLAGS}"   CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_RELEASE "${_RELEASE_FLAGS}" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG   "${_DEBUG_FLAGS}"  CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "${_RELEASE_FLAGS}" CACHE STRING "" FORCE)
+
 ###########
 #  core   #
 ###########
@@ -89,6 +105,11 @@ set_target_properties(core PROPERTIES
 
 target_include_directories(core PUBLIC ${CORE_INC_DIR})
 add_dependencies(core llvm_project)
+
+target_compile_options(core PRIVATE
+  $<$<COMPILE_LANGUAGE:C>:   ${CMAKE_C_FLAGS}>
+  $<$<COMPILE_LANGUAGE:CXX>: ${CMAKE_CXX_FLAGS}>
+)
 
 ###############
 #  frontend   #
@@ -112,6 +133,11 @@ target_include_directories(frontend PUBLIC ${FRONTEND_INC_DIR})
 target_link_libraries(frontend PRIVATE core)
 add_dependencies(frontend llvm_project)
 
+target_compile_options(frontend PRIVATE
+  $<$<COMPILE_LANGUAGE:C>:   ${CMAKE_C_FLAGS}>
+  $<$<COMPILE_LANGUAGE:CXX>: ${CMAKE_CXX_FLAGS}>
+)
+
 ###########
 #  sclc   #
 ###########
@@ -122,47 +148,35 @@ set(SRC_DIR ${CMAKE_SOURCE_DIR}/sclc/src)
 file(GLOB_RECURSE C_SRCS   CONFIGURE_DEPENDS ${SRC_DIR}/*.c)
 file(GLOB_RECURSE CXX_SRCS CONFIGURE_DEPENDS ${SRC_DIR}/*.cpp)
 
-function(add_sclc_target NAME OUTDIR)
-  cmake_parse_arguments(A "" "" "CFLAGS" ${ARGN})
+add_executable(sclc ${C_SRCS} ${CXX_SRCS})
 
-  add_executable(${NAME} ${C_SRCS} ${CXX_SRCS})
-
-  set_target_properties(${NAME} PROPERTIES
-    C_STANDARD               23
-    CXX_STANDARD             17
-    CXX_STANDARD_REQUIRED    ON
-    RUNTIME_OUTPUT_DIRECTORY ${OUTDIR}
-    BUILD_RPATH              "$ORIGIN/../external/llvm-project/build/lib"
-  )
-
-  target_include_directories(${NAME} PRIVATE
-    ${INC_DIR}
-    ${LLVM_INC}
-  )
-
-  target_compile_options(${NAME} PRIVATE
-    $<$<COMPILE_LANGUAGE:C>:   ${A_CFLAGS}>
-    $<$<COMPILE_LANGUAGE:CXX>: ${A_CFLAGS} ${LLVM_CXXFLAGS} -Wno-unused-parameter>
-  )
-
-  target_link_directories(${NAME} PRIVATE ${LLVM_LIB})
-  target_link_libraries(${NAME} PRIVATE core frontend LLVM ${LLVM_SYSTEM_LIBS} m)
-
-  add_dependencies(${NAME} llvm_project)
-endfunction()
-
-add_sclc_target(sclc ${CMAKE_BINARY_DIR}/sclc-bin
-  CFLAGS -g -O0 -Wall -Wextra
+set_target_properties(sclc PROPERTIES
+  C_STANDARD               23
+  CXX_STANDARD             17
+  CXX_STANDARD_REQUIRED    ON
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/sclc-bin
+  BUILD_RPATH              "$ORIGIN/../external/llvm-project/build/lib"
 )
 
-add_sclc_target(sclc_release ${CMAKE_BINARY_DIR}/sclc-bin-release
-  CFLAGS -O2 -DNDEBUG -Wall -Werror -Wextra
+target_include_directories(sclc PRIVATE
+  ${INC_DIR}
+  ${LLVM_INC}
 )
+
+target_compile_options(sclc PRIVATE
+  $<$<COMPILE_LANGUAGE:C>:   ${CMAKE_C_FLAGS}>
+  $<$<COMPILE_LANGUAGE:CXX>: ${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -Wno-unused-parameter>
+)
+
+target_link_directories(sclc PRIVATE ${LLVM_LIB})
+target_link_libraries(sclc PRIVATE core frontend LLVM ${LLVM_SYSTEM_LIBS} m)
+
+add_dependencies(sclc llvm_project)
 
 add_custom_target(do-install
-  COMMAND sudo cp $<TARGET_FILE:sclc_release> /usr/local/bin/sclc
-  DEPENDS sclc_release
-  COMMENT "[INSTALL] $<TARGET_FILE:sclc_release> -> /usr/local/bin/sclc"
+  COMMAND sudo cp $<TARGET_FILE:sclc> /usr/local/bin/sclc
+  DEPENDS sclc
+  COMMENT "[INSTALL] $<TARGET_FILE:sclc> -> /usr/local/bin/sclc"
 )
 
 ############

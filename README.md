@@ -22,9 +22,8 @@ $ cd scull
 
 # build llvm and sclc
 $ mkdir build && cd build
-$ cmake ..
+$ cmake .. -DCMAKE_BUILD_TYPE=Debug
 $ cmake --build . --target llvm_project
-$ cmake ..
 $ cmake --build . --target sclc
 
 # compile the program
