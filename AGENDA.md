@@ -88,7 +88,7 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 ### Operators
 
-- [ ] NEC Logical operators (`&&`, `||`, `!`)
+- [x] NEC Logical operators (`&&`, `||`, `!`)
 - [ ] NEC Bitwise operators (`&`, `|`, `^`, `~`, `<<`, `>>`)
 - [ ] NEC Assignment operators (`+=`, `-=`, `*=`, `/=`, etc.)
 
