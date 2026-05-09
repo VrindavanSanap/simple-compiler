@@ -46,7 +46,7 @@ static void check_var_and_print(variable *var) {
  *
  * @param expr: pointer to an expression node.
  */
-static void check_expr_and_print(expr_node *expr);
+static void check_arithmetic_expr_and_print(arithmetic_expr_node *expr);
 
 /*
  * @brief: prints a term node.
@@ -81,7 +81,7 @@ static void check_term_and_print(term_node *term) {
     break;
   case TERM_ARRAY_ACCESS:
     printf("%s[", term->array_access.array_var.name);
-    check_expr_and_print(term->array_access.index_expr);
+    check_arithmetic_expr_and_print(term->array_access.index_expr);
     printf("]");
     break;
   case TERM_ARRAY_LITERAL:
@@ -90,9 +90,9 @@ static void check_term_and_print(term_node *term) {
   case TERM_FUNCTION_CALL:
     printf("%s(", term->fn_call.name);
     for (u64 i = 0; i < term->fn_call.parameters.count; i++) {
-      expr_node arg;
+      arithmetic_expr_node arg;
       dynamic_array_get(&term->fn_call.parameters, i, &arg);
-      check_expr_and_print(&arg);
+      check_arithmetic_expr_and_print(&arg);
       if (i < term->fn_call.parameters.count - 1) {
         printf(", ");
       }
@@ -107,7 +107,7 @@ static void check_term_and_print(term_node *term) {
  *
  * @param expr: pointer to an expression node.
  */
-static void check_expr_and_print(expr_node *expr) {
+static void check_arithmetic_expr_and_print(arithmetic_expr_node *expr) {
   switch (expr->kind) {
   case EXPR_TERM:
     check_term_and_print(&expr->term);
@@ -115,63 +115,58 @@ static void check_expr_and_print(expr_node *expr) {
 
   case EXPR_ADD:
     printf("(");
-    check_expr_and_print(expr->binary.left);
+    check_arithmetic_expr_and_print(expr->binary.left);
     printf(" + ");
-    check_expr_and_print(expr->binary.right);
+    check_arithmetic_expr_and_print(expr->binary.right);
     printf(")");
     break;
 
   case EXPR_SUBTRACT:
     printf("(");
-    check_expr_and_print(expr->binary.left);
+    check_arithmetic_expr_and_print(expr->binary.left);
     printf(" - ");
-    check_expr_and_print(expr->binary.right);
+    check_arithmetic_expr_and_print(expr->binary.right);
     printf(")");
     break;
 
   case EXPR_MULTIPLY:
     printf("(");
-    check_expr_and_print(expr->binary.left);
+    check_arithmetic_expr_and_print(expr->binary.left);
     printf(" * ");
-    check_expr_and_print(expr->binary.right);
+    check_arithmetic_expr_and_print(expr->binary.right);
     printf(")");
     break;
 
   case EXPR_DIVIDE:
     printf("(");
-    check_expr_and_print(expr->binary.left);
+    check_arithmetic_expr_and_print(expr->binary.left);
     printf(" / ");
-    check_expr_and_print(expr->binary.right);
+    check_arithmetic_expr_and_print(expr->binary.right);
     printf(")");
     break;
 
   case EXPR_MODULO:
     printf("(");
-    check_expr_and_print(expr->binary.left);
+    check_arithmetic_expr_and_print(expr->binary.left);
     printf(" %% ");
-    check_expr_and_print(expr->binary.right);
+    check_arithmetic_expr_and_print(expr->binary.right);
     printf(")");
     break;
 
   case EXPR_UNARY_MINUS:
     printf("-");
-    check_expr_and_print(expr->unary);
+    check_arithmetic_expr_and_print(expr->unary);
     break;
   }
 }
 
-/*
- * @brief: prints an individual binary node.
- *
- * @param bnode: pointer to a binary node.
- * @param operator: the operator to print between the two nodes.
- */
+static void check_expr_node_and_print(expr_node *expr);
+
 static void check_binary_node_and_print(term_binary_node *bnode,
                                         char *operator) {
   check_term_and_print(&bnode->lhs);
   printf(" %s ", operator);
   check_term_and_print(&bnode->rhs);
-  printf("\n");
 }
 
 static void check_rel_node_and_print(rel_node *rel) {
@@ -183,7 +178,6 @@ static void check_rel_node_and_print(rel_node *rel) {
     check_binary_node_and_print(&rel->comparison, "!=");
     break;
   case REL_LESS_THAN:
-    check_binary_node_and_print(&rel->comparison, "<");
     break;
   case REL_LESS_THAN_OR_EQUAL:
     check_binary_node_and_print(&rel->comparison, "<=");
@@ -193,6 +187,38 @@ static void check_rel_node_and_print(rel_node *rel) {
     break;
   case REL_GREATER_THAN_OR_EQUAL:
     check_binary_node_and_print(&rel->comparison, ">=");
+    break;
+  }
+}
+
+static void check_logical_node_and_print(logical_node *log) {
+  switch (log->kind) {
+  case LOG_AND:
+    check_expr_node_and_print(log->binary.lhs);
+    printf(" AND ");
+    check_expr_node_and_print(log->binary.rhs);
+    printf("\n");
+    break;
+  case LOG_OR:
+    check_expr_node_and_print(log->binary.lhs);
+    printf(" OR ");
+    check_expr_node_and_print(log->binary.rhs);
+    printf("\n");
+    break;
+  case LOG_NOT:
+    printf("NOT ");
+    check_expr_node_and_print(log->unary.operand);
+    break;
+  }
+}
+
+static void check_expr_node_and_print(expr_node *expr) {
+  switch (expr->kind) {
+  case EXPR_LOGICAL:
+    check_logical_node_and_print(&expr->logical);
+    break;
+  case EXPR_RELATIONAL:
+    check_rel_node_and_print(&expr->relational);
     break;
   }
 }
@@ -249,7 +275,7 @@ void print_instr(instr_node *instr) {
     switch (instr->initialize_variable.var.type) {
     case TYPE_INT:
     case TYPE_POINTER:
-      check_expr_and_print(instr->initialize_variable.expr);
+      check_arithmetic_expr_and_print(instr->initialize_variable.expr);
       printf("\n");
       break;
     case TYPE_CHAR:
@@ -271,7 +297,7 @@ void print_instr(instr_node *instr) {
     printf("assign: ");
     check_var_and_print(&instr->assign.identifier);
     printf(" = ");
-    check_expr_and_print(instr->assign.expr);
+    check_arithmetic_expr_and_print(instr->assign.expr);
     printf("\n");
     break;
 
@@ -279,9 +305,11 @@ void print_instr(instr_node *instr) {
     printf("assign to array subscript: ");
     check_var_and_print(&instr->assign_to_array_subscript.var);
     printf("[");
-    check_expr_and_print(instr->assign_to_array_subscript.index_expr);
+    check_arithmetic_expr_and_print(
+        instr->assign_to_array_subscript.index_expr);
     printf("] = ");
-    check_expr_and_print(instr->assign_to_array_subscript.expr_to_assign);
+    check_arithmetic_expr_and_print(
+        instr->assign_to_array_subscript.expr_to_assign);
     printf("\n");
     break;
 
@@ -289,7 +317,7 @@ void print_instr(instr_node *instr) {
     printf("declare array: ");
     check_var_and_print(&instr->declare_array.var);
     printf("[");
-    check_expr_and_print(instr->declare_array.size_expr);
+    check_arithmetic_expr_and_print(instr->declare_array.size_expr);
     printf("]\n");
     break;
 
@@ -297,12 +325,12 @@ void print_instr(instr_node *instr) {
     printf("initialize array: ");
     check_var_and_print(&instr->initialize_array.var);
     printf("[");
-    check_expr_and_print(instr->initialize_array.size_expr);
+    check_arithmetic_expr_and_print(instr->initialize_array.size_expr);
     printf("] = {");
     for (u64 i = 0; i < instr->initialize_array.literal.elements.count; i++) {
-      expr_node elem;
+      arithmetic_expr_node elem;
       dynamic_array_get(&instr->initialize_array.literal.elements, i, &elem);
-      check_expr_and_print(&elem);
+      check_arithmetic_expr_and_print(&elem);
       if (i < instr->initialize_array.literal.elements.count - 1) {
         printf(", ");
       }
@@ -313,7 +341,7 @@ void print_instr(instr_node *instr) {
   case INSTR_IF: {
     if_node *ifn = &instr->if_;
     printf("if ");
-    check_rel_node_and_print(&ifn->rel);
+    check_expr_node_and_print(&ifn->condition);
     PRINT_INDENTATION
     printf("then:\n");
     print_cond_block(&ifn->then);
@@ -329,7 +357,7 @@ void print_instr(instr_node *instr) {
     match_node *match = &instr->match;
 
     printf("match ");
-    check_expr_and_print(match->expr);
+    check_arithmetic_expr_and_print(match->expr);
     printf(" {\n");
 
     icount++;
@@ -345,9 +373,9 @@ void print_instr(instr_node *instr) {
       switch (case_node.kind) {
       case MATCH_CASE_VALUES: {
         for (u64 j = 0; j < case_node.values.values.count; j++) {
-          expr_node *val;
+          arithmetic_expr_node *val;
           dynamic_array_get(&case_node.values.values, j, &val);
-          check_expr_and_print(val);
+          check_arithmetic_expr_and_print(val);
           if (j < case_node.values.values.count - 1)
             printf(", ");
         }
@@ -356,9 +384,9 @@ void print_instr(instr_node *instr) {
       }
 
       case MATCH_CASE_RANGE: {
-        check_expr_and_print(case_node.range.start);
+        check_arithmetic_expr_and_print(case_node.range.start);
         printf("...");
-        check_expr_and_print(case_node.range.end);
+        check_arithmetic_expr_and_print(case_node.range.end);
         printf(":\n");
         break;
       }
@@ -397,19 +425,19 @@ void print_instr(instr_node *instr) {
 
     case LOOP_WHILE:
       printf("while loop starts, break condition: ");
-      check_rel_node_and_print(&instr->loop.conditional.break_condition);
+      check_expr_node_and_print(&instr->loop.conditional.break_condition);
       break;
 
     case LOOP_DO_WHILE:
       printf("do-while-loop starts, break condition: ");
-      check_rel_node_and_print(&instr->loop.conditional.break_condition);
+      check_expr_node_and_print(&instr->loop.conditional.break_condition);
       break;
 
     case LOOP_FOR:
       printf("for %s in ", instr->loop._for.iterator.name);
-      check_expr_and_print(instr->loop._for.range_start);
+      check_arithmetic_expr_and_print(instr->loop._for.range_start);
       printf("...");
-      check_expr_and_print(instr->loop._for.range_end);
+      check_arithmetic_expr_and_print(instr->loop._for.range_end);
       printf(" {\n");
       break;
     }
@@ -546,9 +574,9 @@ void print_instr(instr_node *instr) {
       printf("void\n");
     } else {
       for (u64 i = 0; i < instr->ret_node.returnvals.count; i++) {
-        expr_node ret_expr;
+        arithmetic_expr_node ret_expr;
         dynamic_array_get(&instr->ret_node.returnvals, i, &ret_expr);
-        check_expr_and_print(&ret_expr);
+        check_arithmetic_expr_and_print(&ret_expr);
         if (i < instr->ret_node.returnvals.count - 1) {
           printf(", ");
         }
@@ -560,9 +588,9 @@ void print_instr(instr_node *instr) {
   case INSTR_FN_CALL:
     printf("function call: %s(", instr->fn_call.name);
     for (u64 i = 0; i < instr->fn_call.parameters.count; i++) {
-      expr_node arg;
+      arithmetic_expr_node arg;
       dynamic_array_get(&instr->fn_call.parameters, i, &arg);
-      check_expr_and_print(&arg);
+      check_arithmetic_expr_and_print(&arg);
       if (i < instr->fn_call.parameters.count - 1) {
         printf(", ");
       }
@@ -580,9 +608,9 @@ void print_ast(ast *program_ast) {
   }
 }
 
-static void free_expr_node(expr_node *expr);
+static void free_arithmetic_expr_node(arithmetic_expr_node *expr);
 
-static void free_exprs(dynamic_array *exprs);
+static void free_arithmetic_exprs(dynamic_array *exprs);
 
 static void free_term_node(term_node *term) {
   switch (term->kind) {
@@ -595,18 +623,18 @@ static void free_term_node(term_node *term) {
   case TERM_ADDOF:
     break;
   case TERM_ARRAY_ACCESS:
-    free_expr_node(term->array_access.index_expr);
+    free_arithmetic_expr_node(term->array_access.index_expr);
     break;
   case TERM_ARRAY_LITERAL:
     dynamic_array_free(&term->array_literal.elements);
     break;
   case TERM_FUNCTION_CALL:
-    free_exprs(&term->fn_call.parameters);
+    free_arithmetic_exprs(&term->fn_call.parameters);
     break;
   }
 }
 
-static void free_expr_node(expr_node *expr) {
+static void free_arithmetic_expr_node(arithmetic_expr_node *expr) {
   switch (expr->kind) {
   case EXPR_TERM:
     free_term_node(&expr->term);
@@ -617,28 +645,54 @@ static void free_expr_node(expr_node *expr) {
   case EXPR_MULTIPLY:
   case EXPR_DIVIDE:
   case EXPR_MODULO:
-    free_expr_node(expr->binary.left);
-    free_expr_node(expr->binary.right);
+    free_arithmetic_expr_node(expr->binary.left);
+    free_arithmetic_expr_node(expr->binary.right);
     break;
 
   case EXPR_UNARY_MINUS:
-    free_expr_node(expr->unary);
+    free_arithmetic_expr_node(expr->unary);
     break;
   }
 }
 
-static void free_exprs(dynamic_array *exprs) {
+static void free_arithmetic_exprs(dynamic_array *exprs) {
   for (u64 i = 0; i < exprs->count; i++) {
-    expr_node expr;
+    arithmetic_expr_node expr;
     dynamic_array_get(exprs, i, &expr);
-    free_expr_node(&expr);
+    free_arithmetic_expr_node(&expr);
   }
   dynamic_array_free(exprs);
 }
 
+static void free_expr_node(expr_node *expr);
+
 static void free_rel_node(rel_node *rel) {
   free_term_node(&rel->comparison.lhs);
   free_term_node(&rel->comparison.rhs);
+}
+
+static void free_logical_node(logical_node *log) {
+  switch (log->kind) {
+  case LOG_AND:
+  case LOG_OR:
+    free_expr_node(log->binary.lhs);
+    free_expr_node(log->binary.rhs);
+    break;
+  case LOG_NOT:
+    free_expr_node(log->unary.operand);
+    break;
+  }
+}
+
+static void free_expr_node(expr_node *expr) {
+  switch (expr->kind) {
+  case EXPR_LOGICAL:
+    free_logical_node(&expr->logical);
+    break;
+  case EXPR_RELATIONAL:
+    free_rel_node(&expr->relational);
+    break;
+  }
 }
 
 static void free_instrs(dynamic_array *instrs);
@@ -658,35 +712,35 @@ static void free_cond_block_node(cond_block_node *block) {
 static void free_instr(instr_node *instr) {
   switch (instr->kind) {
   case INSTR_INITIALIZE:
-    free_expr_node(instr->initialize_variable.expr);
+    free_arithmetic_expr_node(instr->initialize_variable.expr);
     break;
 
   case INSTR_DECLARE_ARRAY:
-    free_expr_node(instr->declare_array.size_expr);
+    free_arithmetic_expr_node(instr->declare_array.size_expr);
     break;
 
   case INSTR_INITIALIZE_ARRAY:
-    free_expr_node(instr->initialize_array.size_expr);
-    free_exprs(&instr->initialize_array.literal.elements);
+    free_arithmetic_expr_node(instr->initialize_array.size_expr);
+    free_arithmetic_exprs(&instr->initialize_array.literal.elements);
     break;
 
   case INSTR_ASSIGN:
-    free_expr_node(instr->assign.expr);
+    free_arithmetic_expr_node(instr->assign.expr);
     break;
 
   case INSTR_ASSIGN_TO_ARRAY_SUBSCRIPT:
-    free_expr_node(instr->assign_to_array_subscript.index_expr);
-    free_expr_node(instr->assign_to_array_subscript.expr_to_assign);
+    free_arithmetic_expr_node(instr->assign_to_array_subscript.index_expr);
+    free_arithmetic_expr_node(instr->assign_to_array_subscript.expr_to_assign);
     break;
 
   case INSTR_IF:
-    free_rel_node(&instr->if_.rel);
+    free_expr_node(&instr->if_.condition);
     free_cond_block_node(&instr->if_.then);
     free_cond_block_node(instr->if_.else_);
     break;
 
   case INSTR_MATCH:
-    free_expr_node(instr->match.expr);
+    free_arithmetic_expr_node(instr->match.expr);
 
     for (u64 i = 0; i < instr->match.cases.count; i++) {
       match_case_node case_node;
@@ -695,16 +749,16 @@ static void free_instr(instr_node *instr) {
       switch (case_node.kind) {
       case MATCH_CASE_VALUES:
         for (u64 j = 0; j < case_node.values.values.count; j++) {
-          expr_node *expr;
+          arithmetic_expr_node *expr;
           dynamic_array_get(&case_node.values.values, j, &expr);
-          free_expr_node(expr);
+          free_arithmetic_expr_node(expr);
         }
         dynamic_array_free(&case_node.values.values);
         break;
 
       case MATCH_CASE_RANGE:
-        free_expr_node(case_node.range.start);
-        free_expr_node(case_node.range.end);
+        free_arithmetic_expr_node(case_node.range.start);
+        free_arithmetic_expr_node(case_node.range.end);
         break;
 
       case MATCH_CASE_DEFAULT:
@@ -721,11 +775,11 @@ static void free_instr(instr_node *instr) {
     switch (instr->loop.kind) {
     case LOOP_DO_WHILE:
     case LOOP_WHILE:
-      free_rel_node(&instr->loop.conditional.break_condition);
+      free_expr_node(&instr->loop.conditional.break_condition);
       break;
     case LOOP_FOR:
-      free_expr_node(instr->loop._for.range_start);
-      free_expr_node(instr->loop._for.range_end);
+      free_arithmetic_expr_node(instr->loop._for.range_start);
+      free_arithmetic_expr_node(instr->loop._for.range_end);
       break;
     case LOOP_UNCONDITIONAL:
       break;
@@ -744,11 +798,11 @@ static void free_instr(instr_node *instr) {
     break;
 
   case INSTR_RETURN:
-    free_exprs(&instr->ret_node.returnvals);
+    free_arithmetic_exprs(&instr->ret_node.returnvals);
     break;
 
   case INSTR_FN_CALL:
-    free_exprs(&instr->fn_call.parameters);
+    free_arithmetic_exprs(&instr->fn_call.parameters);
     break;
 
   case INSTR_DECLARE:

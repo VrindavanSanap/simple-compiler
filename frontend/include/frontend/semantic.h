@@ -23,7 +23,7 @@
  *
  * @return: the integer value of the constant expression
  */
-u32 evaluate_const_expr(expr_node *expr);
+u32 evaluate_const_expr(arithmetic_expr_node *expr);
 
 /*
  * @brief: go through all the variables and labels in the parse tree and check

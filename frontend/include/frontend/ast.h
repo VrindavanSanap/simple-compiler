@@ -33,6 +33,8 @@ typedef enum term_kind {
   TERM_FUNCTION_CALL,
 } term_kind;
 
+typedef struct arithmetic_expr_node arithmetic_expr_node;
+
 typedef struct expr_node expr_node;
 
 /*
@@ -40,7 +42,7 @@ typedef struct expr_node expr_node;
  */
 typedef struct array_access_node {
   variable array_var;
-  expr_node *index_expr;
+  arithmetic_expr_node *index_expr;
 } array_access_node;
 
 /*
@@ -72,9 +74,10 @@ typedef struct term_node {
 } term_node;
 
 /*
- * @enum expr_kind: enumeration of all the expressions supported by the parser.
+ * @enum arithmetic_expr_kind: enumeration of all the expressions supported by
+ * the parser.
  */
-typedef enum expr_kind {
+typedef enum arithmetic_expr_kind {
   EXPR_TERM = 0,
 
   EXPR_ADD,
@@ -84,26 +87,34 @@ typedef enum expr_kind {
   EXPR_MODULO,
 
   EXPR_UNARY_MINUS,
-} expr_kind;
+} arithmetic_expr_kind;
 
 /*
- * @struct expr_node: represents an expression.
+ * @struct arithmetic_expr_node: represents an expression.
  */
-typedef struct expr_node {
-  expr_kind kind;
+typedef struct arithmetic_expr_node {
+  arithmetic_expr_kind kind;
   u64 line;
 
   union {
     term_node term;
 
     struct {
-      struct expr_node *left;
-      struct expr_node *right;
+      struct arithmetic_expr_node *left;
+      struct arithmetic_expr_node *right;
     } binary;
 
-    struct expr_node *unary;
+    struct arithmetic_expr_node *unary;
   };
-} expr_node;
+} arithmetic_expr_node;
+
+/*
+ * @struct term_binary_node: represents a binary term.
+ */
+typedef struct term_binary_node {
+  term_node lhs;
+  term_node rhs;
+} term_binary_node;
 
 /*
  * @enum rel_kind: enumeration of all the relational operations supported by the
@@ -119,14 +130,6 @@ typedef enum rel_kind {
 } rel_kind;
 
 /*
- * @struct term_binary_node: represents a binary term.
- */
-typedef struct term_binary_node {
-  term_node lhs;
-  term_node rhs;
-} term_binary_node;
-
-/*
  * @struct rel_node: represents a relational expression.
  */
 typedef struct rel_node {
@@ -134,6 +137,57 @@ typedef struct rel_node {
   u64 line;
   term_binary_node comparison;
 } rel_node;
+
+/*
+ * @enum logical_kind: enumeration of all the logical operations supported by
+ * the parser.
+ */
+typedef enum logical_kind {
+  LOG_NOT = 0,
+  LOG_AND,
+  LOG_OR,
+} logical_kind;
+
+/*
+ * @struct logical_node: represents a logical expression.
+ */
+typedef struct logical_node {
+  logical_kind kind;
+  u64 line;
+  union {
+    /* LOG_AND, LOG_OR */
+    struct {
+      expr_node *lhs;
+      expr_node *rhs;
+    } binary;
+
+    /* LOG_NOT */
+    struct {
+      expr_node *operand;
+    } unary;
+  };
+} logical_node;
+
+/*
+ * @enum expr_kind: enumeration of all the expression types supported by the
+ * parser.
+ */
+typedef enum expr_kind {
+  EXPR_LOGICAL,
+  EXPR_RELATIONAL,
+} expr_kind;
+
+/*
+ * @struct expr_node: represents an expression. An expression is either a
+ * logical or relational node, discriminated by the kind field.
+ */
+typedef struct expr_node {
+  expr_kind kind;
+  union {
+    logical_node logical;
+    rel_node relational;
+  };
+} expr_node;
 
 /*
  * @enum instr_kind: enumeration of all the instructions supported by the
@@ -168,29 +222,29 @@ typedef struct instr_node instr_node;
 
 typedef struct initialize_variable_node {
   variable var;
-  expr_node *expr;
+  arithmetic_expr_node *expr;
 } initialize_variable_node;
 
 typedef struct declare_array_node {
   variable var;
-  expr_node *size_expr;
+  arithmetic_expr_node *size_expr;
 } declare_array_node;
 
 typedef struct initialize_array_node {
   variable var;
-  expr_node *size_expr;
+  arithmetic_expr_node *size_expr;
   array_literal_node literal;
 } initialize_array_node;
 
 typedef struct assign_node {
   variable identifier;
-  expr_node *expr;
+  arithmetic_expr_node *expr;
 } assign_node;
 
 typedef struct assign_to_array_subscript_node {
   variable var;
-  expr_node *index_expr;
-  expr_node *expr_to_assign;
+  arithmetic_expr_node *index_expr;
+  arithmetic_expr_node *expr_to_assign;
 } assign_to_array_subscript_node;
 
 typedef enum cond_block_kind {
@@ -208,7 +262,7 @@ typedef struct cond_block_node {
 } cond_block_node;
 
 typedef struct if_node {
-  rel_node rel;
+  expr_node condition;
 
   cond_block_node then;
   dynamic_array else_ifs;
@@ -226,8 +280,8 @@ typedef struct match_case_values_node {
 } match_case_values_node;
 
 typedef struct match_case_range_node {
-  expr_node *start;
-  expr_node *end;
+  arithmetic_expr_node *start;
+  arithmetic_expr_node *end;
 } match_case_range_node;
 
 typedef struct match_case_node {
@@ -242,7 +296,7 @@ typedef struct match_case_node {
 } match_case_node;
 
 typedef struct match_node {
-  expr_node *expr;
+  arithmetic_expr_node *expr;
   dynamic_array cases;
 } match_node;
 
@@ -273,13 +327,13 @@ typedef struct loop_node {
     } unconditional;
 
     struct {
-      rel_node break_condition;
+      expr_node break_condition;
     } conditional;
 
     struct {
       variable iterator;
-      expr_node *range_start;
-      expr_node *range_end;
+      arithmetic_expr_node *range_start;
+      arithmetic_expr_node *range_end;
     } _for;
   };
 } loop_node;

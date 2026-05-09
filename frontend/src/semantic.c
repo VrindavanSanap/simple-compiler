@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-u32 evaluate_const_expr(expr_node *expr) {
+u32 evaluate_const_expr(arithmetic_expr_node *expr) {
   if (expr == NULL) {
     return 0;
   }
@@ -135,8 +135,8 @@ static void declare_variables(variable *var_to_declare, ht *variables) {
  * @param var_to_declare: the variable struct to append.
  * @param variables: pointer to the variables hash table.
  */
-static void declare_array(variable *arr_to_declare, expr_node *size_expr,
-                          ht *variables) {
+static void declare_array(variable *arr_to_declare,
+                          arithmetic_expr_node *size_expr, ht *variables) {
   if (!arr_to_declare || !arr_to_declare->name || !variables)
     return;
 
@@ -187,8 +187,8 @@ static void term_check_variables(term_node *term, ht *variables,
  * @param variables: pointer to the variables hash table.
  * @param functions: pointer to the functions hash table.
  */
-static void expr_check_variables(expr_node *expr, ht *variables,
-                                 ht *functions) {
+static void arithmetic_expr_check_variables(arithmetic_expr_node *expr,
+                                            ht *variables, ht *functions) {
   switch (expr->kind) {
   case EXPR_TERM:
     term_check_variables(&expr->term, variables, functions);
@@ -199,14 +199,16 @@ static void expr_check_variables(expr_node *expr, ht *variables,
   case EXPR_MULTIPLY:
   case EXPR_DIVIDE:
   case EXPR_MODULO:
-    expr_check_variables(expr->binary.left, variables, functions);
-    expr_check_variables(expr->binary.right, variables, functions);
+    arithmetic_expr_check_variables(expr->binary.left, variables, functions);
+    arithmetic_expr_check_variables(expr->binary.right, variables, functions);
     break;
 
   case EXPR_UNARY_MINUS:
-    expr_check_variables(expr->unary, variables, functions);
+    arithmetic_expr_check_variables(expr->unary, variables, functions);
   }
 }
+
+static void expr_check_variables(expr_node *expr, ht *variables, ht *functions);
 
 /*
  * @brief: check variables in relational expressions
@@ -218,6 +220,33 @@ static void expr_check_variables(expr_node *expr, ht *variables,
 static void rel_check_variables(rel_node *rel, ht *variables, ht *functions) {
   term_check_variables(&rel->comparison.lhs, variables, functions);
   term_check_variables(&rel->comparison.rhs, variables, functions);
+}
+
+static void logical_check_variables(logical_node *log, ht *variables,
+                                    ht *functions) {
+  switch (log->kind) {
+  case LOG_AND:
+  case LOG_OR:
+    expr_check_variables(log->binary.lhs, variables, functions);
+    expr_check_variables(log->binary.rhs, variables, functions);
+    break;
+
+  case LOG_NOT:
+    expr_check_variables(log->unary.operand, variables, functions);
+    break;
+  }
+}
+
+static void expr_check_variables(expr_node *expr, ht *variables,
+                                 ht *functions) {
+  switch (expr->kind) {
+  case EXPR_LOGICAL:
+    logical_check_variables(&expr->logical, variables, functions);
+    break;
+  case EXPR_RELATIONAL:
+    rel_check_variables(&expr->relational, variables, functions);
+    break;
+  }
 }
 
 static void instr_check_variables(instr_node *instr, ht *variables,
@@ -264,11 +293,13 @@ static void check_loop(loop_node *loop, ht *parent_variables, ht *functions) {
   }
 
   if (loop->kind == LOOP_WHILE || loop->kind == LOOP_DO_WHILE) {
-    rel_check_variables(&loop->conditional.break_condition, loop->variables,
-                        functions);
+    expr_check_variables(&loop->conditional.break_condition, loop->variables,
+                         functions);
   } else if (loop->kind == LOOP_FOR) {
-    expr_check_variables(loop->_for.range_start, loop->variables, functions);
-    expr_check_variables(loop->_for.range_end, loop->variables, functions);
+    arithmetic_expr_check_variables(loop->_for.range_start, loop->variables,
+                                    functions);
+    arithmetic_expr_check_variables(loop->_for.range_end, loop->variables,
+                                    functions);
 
     declare_variables(&loop->_for.iterator, loop->variables);
   }
@@ -297,7 +328,8 @@ static void instr_check_variables(instr_node *instr, ht *variables,
     break;
 
   case INSTR_INITIALIZE:
-    expr_check_variables(instr->initialize_variable.expr, variables, functions);
+    arithmetic_expr_check_variables(instr->initialize_variable.expr, variables,
+                                    functions);
     declare_variables(&instr->initialize_variable.var, variables);
     break;
 
@@ -310,9 +342,9 @@ static void instr_check_variables(instr_node *instr, ht *variables,
     declare_array(&instr->initialize_array.var,
                   instr->initialize_array.size_expr, variables);
     for (u64 i = 0; i < instr->initialize_array.literal.elements.count; i++) {
-      expr_node elem;
+      arithmetic_expr_node elem;
       dynamic_array_get(&instr->initialize_array.literal.elements, i, &elem);
-      expr_check_variables(&elem, variables, functions);
+      arithmetic_expr_check_variables(&elem, variables, functions);
     }
     break;
 
@@ -324,25 +356,25 @@ static void instr_check_variables(instr_node *instr, ht *variables,
                  instr->assign_to_array_subscript.var.name,
                  instr->assign_to_array_subscript.var.line);
     }
-    expr_check_variables(instr->assign_to_array_subscript.index_expr, variables,
-                         functions);
-    expr_check_variables(instr->assign_to_array_subscript.expr_to_assign,
-                         variables, functions);
+    arithmetic_expr_check_variables(instr->assign_to_array_subscript.index_expr,
+                                    variables, functions);
+    arithmetic_expr_check_variables(
+        instr->assign_to_array_subscript.expr_to_assign, variables, functions);
     break;
 
   case INSTR_ASSIGN:
-    expr_check_variables(instr->assign.expr, variables, functions);
+    arithmetic_expr_check_variables(instr->assign.expr, variables, functions);
     break;
 
   case INSTR_IF:
-    rel_check_variables(&instr->if_.rel, variables, functions);
+    expr_check_variables(&instr->if_.condition, variables, functions);
     cond_block_check_variables(&instr->if_.then, variables, functions);
     if (instr->if_.else_)
       cond_block_check_variables(instr->if_.else_, variables, functions);
     break;
 
   case INSTR_MATCH:
-    expr_check_variables(instr->match.expr, variables, functions);
+    arithmetic_expr_check_variables(instr->match.expr, variables, functions);
 
     for (u64 i = 0; i < instr->match.cases.count; i++) {
       match_case_node case_node;
@@ -351,14 +383,16 @@ static void instr_check_variables(instr_node *instr, ht *variables,
       switch (case_node.kind) {
       case MATCH_CASE_VALUES:
         for (u64 j = 0; j < case_node.values.values.count; j++) {
-          expr_node *expr;
+          arithmetic_expr_node *expr;
           dynamic_array_get(&case_node.values.values, j, &expr);
-          expr_check_variables(expr, variables, functions);
+          arithmetic_expr_check_variables(expr, variables, functions);
         }
         break;
       case MATCH_CASE_RANGE:
-        expr_check_variables(case_node.range.start, variables, functions);
-        expr_check_variables(case_node.range.end, variables, functions);
+        arithmetic_expr_check_variables(case_node.range.start, variables,
+                                        functions);
+        arithmetic_expr_check_variables(case_node.range.end, variables,
+                                        functions);
         break;
       case MATCH_CASE_DEFAULT:
         break;
@@ -500,8 +534,8 @@ static void instrs_check_labels(dynamic_array *instrs, dynamic_array *labels) {
  * instruction.
  * @param variables: pointer to the variables hash table.
  */
-static type expr_type(expr_node *expr, type target_type, ht *variables,
-                      ht *functions);
+static type arithmetic_expr_type(arithmetic_expr_node *expr, type target_type,
+                                 ht *variables, ht *functions);
 
 /*
  * @brief: check for types in a term_node
@@ -533,8 +567,8 @@ static type term_type(term_node *term, ht *variables, ht *functions) {
                  term->array_access.array_var.name, term->line);
       return TYPE_VOID;
     }
-    type index_type = expr_type(term->array_access.index_expr, TYPE_INT,
-                                variables, functions);
+    type index_type = arithmetic_expr_type(term->array_access.index_expr,
+                                           TYPE_INT, variables, functions);
     if (index_type != TYPE_INT) {
       scu_perror("Array index must be of type int, got type at [line %" PRIu64
                  "]\n",
@@ -572,13 +606,14 @@ static type term_type(term_node *term, ht *variables, ht *functions) {
 
     for (u64 i = 0;
          i < term->fn_call.parameters.count && i < fn->parameters.count; i++) {
-      expr_node arg_expr;
+      arithmetic_expr_node arg_expr;
       dynamic_array_get(&term->fn_call.parameters, i, &arg_expr);
 
       variable param;
       dynamic_array_get(&fn->parameters, i, &param);
 
-      type arg_type = expr_type(&arg_expr, param.type, variables, functions);
+      type arg_type =
+          arithmetic_expr_type(&arg_expr, param.type, variables, functions);
 
       if (arg_type != param.type) {
         if (!(param.type == TYPE_POINTER &&
@@ -615,8 +650,8 @@ static type term_type(term_node *term, ht *variables, ht *functions) {
  * instruction.
  * @param variables: pointer to the variables hash table.
  */
-static type expr_type(expr_node *expr, type target_type, ht *variables,
-                      ht *functions) {
+static type arithmetic_expr_type(arithmetic_expr_node *expr, type target_type,
+                                 ht *variables, ht *functions) {
   type lhs, rhs;
 
   switch (expr->kind) {
@@ -628,12 +663,14 @@ static type expr_type(expr_node *expr, type target_type, ht *variables,
   case EXPR_MULTIPLY:
   case EXPR_DIVIDE:
   case EXPR_MODULO:
-    lhs = expr_type(expr->binary.left, target_type, variables, functions);
-    rhs = expr_type(expr->binary.right, target_type, variables, functions);
+    lhs = arithmetic_expr_type(expr->binary.left, target_type, variables,
+                               functions);
+    rhs = arithmetic_expr_type(expr->binary.right, target_type, variables,
+                               functions);
     break;
 
   case EXPR_UNARY_MINUS:
-    return expr_type(expr->unary, target_type, variables, functions);
+    return arithmetic_expr_type(expr->unary, target_type, variables, functions);
   }
 
   if (lhs != rhs) {
@@ -645,6 +682,8 @@ static type expr_type(expr_node *expr, type target_type, ht *variables,
 
   return lhs;
 }
+
+static void expr_typecheck(expr_node *expr, ht *variables, ht *functions);
 
 /*
  * @brief: check for types in a rel_node
@@ -666,6 +705,31 @@ static void rel_typecheck(rel_node *rel, ht *variables, ht *functions) {
   }
 }
 
+static void logical_typecheck(logical_node *log, ht *variables, ht *functions) {
+  switch (log->kind) {
+  case LOG_AND:
+  case LOG_OR:
+    expr_typecheck(log->binary.lhs, variables, functions);
+    expr_typecheck(log->binary.rhs, variables, functions);
+    break;
+
+  case LOG_NOT:
+    expr_typecheck(log->unary.operand, variables, functions);
+    break;
+  }
+}
+
+static void expr_typecheck(expr_node *expr, ht *variables, ht *functions) {
+  switch (expr->kind) {
+  case EXPR_LOGICAL:
+    logical_typecheck(&expr->logical, variables, functions);
+    break;
+  case EXPR_RELATIONAL:
+    rel_typecheck(&expr->relational, variables, functions);
+    break;
+  }
+}
+
 /*
  * @brief: check for types in an instr_node
  *
@@ -676,8 +740,8 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
   switch (instr->kind) {
   case INSTR_INITIALIZE: {
     type target_type = instr->initialize_variable.var.type;
-    type expr_result = expr_type(instr->initialize_variable.expr, target_type,
-                                 variables, functions);
+    type expr_result = arithmetic_expr_type(instr->initialize_variable.expr,
+                                            target_type, variables, functions);
     if (target_type == TYPE_POINTER) {
       return;
     } else if (target_type != expr_result) {
@@ -693,9 +757,10 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
   case INSTR_INITIALIZE_ARRAY: {
     type array_type = instr->initialize_array.var.type;
     for (u64 i = 0; i < instr->initialize_array.literal.elements.count; i++) {
-      expr_node elem;
+      arithmetic_expr_node elem;
       dynamic_array_get(&instr->initialize_array.literal.elements, i, &elem);
-      type elem_type = expr_type(&elem, array_type, variables, functions);
+      type elem_type =
+          arithmetic_expr_type(&elem, array_type, variables, functions);
       if (array_type != elem_type && array_type != TYPE_POINTER) {
         const char *array_type_str = type_to_str(array_type);
         const char *elem_type_str = type_to_str(elem_type);
@@ -709,8 +774,8 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
 
   case INSTR_ASSIGN: {
     type target_type = get_var_type(variables, &instr->assign.identifier);
-    type expr_result =
-        expr_type(instr->assign.expr, target_type, variables, functions);
+    type expr_result = arithmetic_expr_type(instr->assign.expr, target_type,
+                                            variables, functions);
     if (target_type == TYPE_POINTER) {
       return;
     } else if (target_type != expr_result) {
@@ -727,16 +792,17 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
     type array_type =
         get_var_type(variables, &instr->assign_to_array_subscript.var);
 
-    type index_type = expr_type(instr->assign_to_array_subscript.index_expr,
-                                TYPE_INT, variables, functions);
+    type index_type =
+        arithmetic_expr_type(instr->assign_to_array_subscript.index_expr,
+                             TYPE_INT, variables, functions);
     if (index_type != TYPE_INT) {
       scu_perror("Array index must be of type int, got %s [line %u]\n",
                  type_to_str(index_type), instr->line);
     }
 
     type expr_result =
-        expr_type(instr->assign_to_array_subscript.expr_to_assign, array_type,
-                  variables, functions);
+        arithmetic_expr_type(instr->assign_to_array_subscript.expr_to_assign,
+                             array_type, variables, functions);
     if (array_type != expr_result && array_type != TYPE_POINTER) {
       const char *array_type_str = type_to_str(array_type);
       const char *expr_result_str = type_to_str(expr_result);
@@ -750,12 +816,12 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
   }
 
   case INSTR_IF: {
-    rel_typecheck(&instr->if_.rel, variables, functions);
+    expr_typecheck(&instr->if_.condition, variables, functions);
     if (instr->if_.else_ifs.count > 0) {
       for (u64 i = 0; i < instr->if_.else_ifs.count; i++) {
         if_node else_if_node;
         dynamic_array_get(&instr->if_.else_ifs, i, &else_if_node);
-        rel_typecheck(&else_if_node.rel, variables, functions);
+        expr_typecheck(&else_if_node.condition, variables, functions);
       }
     }
     break;
@@ -763,7 +829,7 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
 
   case INSTR_MATCH: {
     type match_expr_type =
-        expr_type(instr->match.expr, TYPE_INT, variables, functions);
+        arithmetic_expr_type(instr->match.expr, TYPE_INT, variables, functions);
 
     for (u64 i = 0; i < instr->match.cases.count; i++) {
       match_case_node case_node;
@@ -772,10 +838,10 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
       switch (case_node.kind) {
       case MATCH_CASE_VALUES: {
         for (u64 j = 0; j < case_node.values.values.count; j++) {
-          expr_node *expr;
+          arithmetic_expr_node *expr;
           dynamic_array_get(&case_node.values.values, j, &expr);
           type value_type =
-              expr_type(expr, match_expr_type, variables, functions);
+              arithmetic_expr_type(expr, match_expr_type, variables, functions);
 
           if (value_type != match_expr_type) {
             const char *match_type_str = type_to_str(match_expr_type);
@@ -789,8 +855,8 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
       }
 
       case MATCH_CASE_RANGE: {
-        type start_type = expr_type(case_node.range.start, match_expr_type,
-                                    variables, functions);
+        type start_type = arithmetic_expr_type(
+            case_node.range.start, match_expr_type, variables, functions);
         if (start_type != match_expr_type) {
           const char *match_type_str = type_to_str(match_expr_type);
           const char *start_type_str = type_to_str(start_type);
@@ -799,8 +865,8 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
                      match_type_str, start_type_str, instr->line);
         }
 
-        type end_type = expr_type(case_node.range.end, match_expr_type,
-                                  variables, functions);
+        type end_type = arithmetic_expr_type(
+            case_node.range.end, match_expr_type, variables, functions);
         if (end_type != match_expr_type) {
           const char *match_type_str = type_to_str(match_expr_type);
           const char *end_type_str = type_to_str(end_type);
@@ -906,13 +972,14 @@ static void check_function_call(fn_call_node *fn_call, ht *functions,
 
   for (u64 i = 0; i < fn_call->parameters.count && i < fn->parameters.count;
        i++) {
-    expr_node arg_expr;
+    arithmetic_expr_node arg_expr;
     dynamic_array_get(&fn_call->parameters, i, &arg_expr);
 
     variable param;
     dynamic_array_get(&fn->parameters, i, &param);
 
-    type arg_type = expr_type(&arg_expr, param.type, variables, functions);
+    type arg_type =
+        arithmetic_expr_type(&arg_expr, param.type, variables, functions);
 
     if (arg_type != param.type && param.type != TYPE_POINTER) {
       scu_perror("Type mismatch in argument %" PRIu64
@@ -944,14 +1011,14 @@ static void check_return_statement(return_node *ret, fn_node *fn, ht *variables,
   }
 
   for (u64 i = 0; i < ret->returnvals.count; i++) {
-    expr_node ret_expr;
+    arithmetic_expr_node ret_expr;
     dynamic_array_get(&ret->returnvals, i, &ret_expr);
 
     type expected_type;
     dynamic_array_get(&fn->returntypes, i, &expected_type);
 
     type actual_type =
-        expr_type(&ret_expr, expected_type, variables, functions);
+        arithmetic_expr_type(&ret_expr, expected_type, variables, functions);
     if (actual_type != expected_type && expected_type != TYPE_POINTER) {
       scu_perror("Return type mismatch in function '%s': expected %s, got %s "
                  "[line %" PRIu64 "]\n",

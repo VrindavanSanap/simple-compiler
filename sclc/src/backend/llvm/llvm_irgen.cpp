@@ -55,7 +55,8 @@ static llvm::AllocaInst *create_entry_block_alloca(llvm::Function *fn,
   return tmp_builder.CreateAlloca(type, nullptr, var_name);
 }
 
-static llvm::Value *llvm_irgen_expr(llvm_backend_ctx &ctx, expr_node *expr);
+static llvm::Value *llvm_irgen_arithmetic_expr(llvm_backend_ctx &ctx,
+                                               arithmetic_expr_node *expr);
 
 static llvm::Value *llvm_irgen_term(llvm_backend_ctx &ctx, term_node *term) {
   switch (term->kind) {
@@ -104,10 +105,10 @@ static llvm::Value *llvm_irgen_term(llvm_backend_ctx &ctx, term_node *term) {
 
     std::vector<llvm::Value *> args;
     for (u64 i = 0; i < call->parameters.count; i++) {
-      expr_node arg;
+      arithmetic_expr_node arg;
       dynamic_array_get(&call->parameters, i, &arg);
 
-      llvm::Value *arg_val = llvm_irgen_expr(ctx, &arg);
+      llvm::Value *arg_val = llvm_irgen_arithmetic_expr(ctx, &arg);
       if (!arg_val)
         return nullptr;
       args.push_back(arg_val);
@@ -158,7 +159,7 @@ static llvm::Value *llvm_irgen_term(llvm_backend_ctx &ctx, term_node *term) {
     llvm::AllocaInst *array_alloca = it->second;
     llvm::Type *alloca_type = array_alloca->getAllocatedType();
 
-    llvm::Value *index = llvm_irgen_expr(ctx, access->index_expr);
+    llvm::Value *index = llvm_irgen_arithmetic_expr(ctx, access->index_expr);
     if (!index)
       return nullptr;
 
@@ -199,59 +200,62 @@ static llvm::Value *llvm_irgen_term(llvm_backend_ctx &ctx, term_node *term) {
   }
 }
 
-static llvm::Value *llvm_irgen_expr(llvm_backend_ctx &ctx, expr_node *expr) {
+static llvm::Value *llvm_irgen_arithmetic_expr(llvm_backend_ctx &ctx,
+                                               arithmetic_expr_node *expr) {
   switch (expr->kind) {
   case EXPR_TERM:
     return llvm_irgen_term(ctx, &expr->term);
 
   case EXPR_ADD: {
-    llvm::Value *lhs = llvm_irgen_expr(ctx, expr->binary.left);
-    llvm::Value *rhs = llvm_irgen_expr(ctx, expr->binary.right);
+    llvm::Value *lhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.left);
+    llvm::Value *rhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.right);
     if (!lhs || !rhs)
       return nullptr;
     return ctx.builder->CreateAdd(lhs, rhs, "addtmp");
   }
 
   case EXPR_SUBTRACT: {
-    llvm::Value *lhs = llvm_irgen_expr(ctx, expr->binary.left);
-    llvm::Value *rhs = llvm_irgen_expr(ctx, expr->binary.right);
+    llvm::Value *lhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.left);
+    llvm::Value *rhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.right);
     if (!lhs || !rhs)
       return nullptr;
     return ctx.builder->CreateSub(lhs, rhs, "subtmp");
   }
 
   case EXPR_MULTIPLY: {
-    llvm::Value *lhs = llvm_irgen_expr(ctx, expr->binary.left);
-    llvm::Value *rhs = llvm_irgen_expr(ctx, expr->binary.right);
+    llvm::Value *lhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.left);
+    llvm::Value *rhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.right);
     if (!lhs || !rhs)
       return nullptr;
     return ctx.builder->CreateMul(lhs, rhs, "multmp");
   }
 
   case EXPR_DIVIDE: {
-    llvm::Value *lhs = llvm_irgen_expr(ctx, expr->binary.left);
-    llvm::Value *rhs = llvm_irgen_expr(ctx, expr->binary.right);
+    llvm::Value *lhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.left);
+    llvm::Value *rhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.right);
     if (!lhs || !rhs)
       return nullptr;
     return ctx.builder->CreateSDiv(lhs, rhs, "divtmp");
   }
 
   case EXPR_MODULO: {
-    llvm::Value *lhs = llvm_irgen_expr(ctx, expr->binary.left);
-    llvm::Value *rhs = llvm_irgen_expr(ctx, expr->binary.right);
+    llvm::Value *lhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.left);
+    llvm::Value *rhs = llvm_irgen_arithmetic_expr(ctx, expr->binary.right);
     if (!lhs || !rhs)
       return nullptr;
     return ctx.builder->CreateSRem(lhs, rhs, "modtmp");
   }
 
   case EXPR_UNARY_MINUS: {
-    llvm::Value *operand = llvm_irgen_expr(ctx, expr->unary);
+    llvm::Value *operand = llvm_irgen_arithmetic_expr(ctx, expr->unary);
     if (!operand)
       return nullptr;
     return ctx.builder->CreateNeg(operand, "negtmp");
   }
   }
 }
+
+static llvm::Value *llvm_irgen_expr(llvm_backend_ctx &ctx, expr_node *expr);
 
 static llvm::Value *llvm_irgen_relational(llvm_backend_ctx &ctx,
                                           rel_node *rel) {
@@ -274,6 +278,43 @@ static llvm::Value *llvm_irgen_relational(llvm_backend_ctx &ctx,
     return ctx.builder->CreateICmpSGT(lhs, rhs, "cmpgt");
   case REL_GREATER_THAN_OR_EQUAL:
     return ctx.builder->CreateICmpSGE(lhs, rhs, "cmpge");
+  }
+}
+
+static llvm::Value *llvm_irgen_logical(llvm_backend_ctx &ctx,
+                                       logical_node *log) {
+  switch (log->kind) {
+  case LOG_AND: {
+    llvm::Value *lhs = llvm_irgen_expr(ctx, log->binary.lhs);
+    llvm::Value *rhs = llvm_irgen_expr(ctx, log->binary.rhs);
+    if (!lhs || !rhs)
+      return nullptr;
+    return ctx.builder->CreateAnd(lhs, rhs, "and");
+  }
+
+  case LOG_OR: {
+    llvm::Value *lhs = llvm_irgen_expr(ctx, log->binary.lhs);
+    llvm::Value *rhs = llvm_irgen_expr(ctx, log->binary.rhs);
+    if (!lhs || !rhs)
+      return nullptr;
+    return ctx.builder->CreateOr(lhs, rhs, "or");
+  }
+
+  case LOG_NOT: {
+    llvm::Value *operand = llvm_irgen_expr(ctx, log->unary.operand);
+    if (!operand)
+      return nullptr;
+    return ctx.builder->CreateNot(operand, "not");
+  }
+  }
+}
+
+static llvm::Value *llvm_irgen_expr(llvm_backend_ctx &ctx, expr_node *expr) {
+  switch (expr->kind) {
+  case EXPR_LOGICAL:
+    return llvm_irgen_logical(ctx, &expr->logical);
+  case EXPR_RELATIONAL:
+    return llvm_irgen_relational(ctx, &expr->relational);
   }
 }
 
@@ -327,7 +368,7 @@ static void llvm_irgen_instr_initialize(llvm_backend_ctx &ctx,
 
   named_values[var->name] = alloca;
 
-  llvm::Value *init_value = llvm_irgen_expr(ctx, init_var->expr);
+  llvm::Value *init_value = llvm_irgen_arithmetic_expr(ctx, init_var->expr);
 
   if (!init_value) {
     scu_perror(const_cast<char *>("Failed to generate intiialization "
@@ -347,7 +388,7 @@ static void llvm_irgen_instr_declare_array(llvm_backend_ctx &ctx,
 
   llvm::Value *size_val = nullptr;
   if (arr->size_expr) {
-    size_val = llvm_irgen_expr(ctx, arr->size_expr);
+    size_val = llvm_irgen_arithmetic_expr(ctx, arr->size_expr);
     if (!size_val) {
       scu_perror(const_cast<char *>(
                      "Failed to evaluate array size for '%s' at line %" PRIu64
@@ -407,7 +448,7 @@ static void llvm_irgen_initialize_array(llvm_backend_ctx &ctx,
 
   llvm::Value *size_val = nullptr;
   if (arr->size_expr) {
-    size_val = llvm_irgen_expr(ctx, arr->size_expr);
+    size_val = llvm_irgen_arithmetic_expr(ctx, arr->size_expr);
     if (!size_val) {
       scu_perror(const_cast<char *>("Failed to evaluate array size for '%s'\n"),
                  var->name);
@@ -425,10 +466,10 @@ static void llvm_irgen_initialize_array(llvm_backend_ctx &ctx,
   named_values[var->name] = alloca;
 
   for (u64 i = 0; i < arr->literal.elements.count; i++) {
-    expr_node elem_expr;
+    arithmetic_expr_node elem_expr;
     dynamic_array_get(&arr->literal.elements, i, &elem_expr);
 
-    llvm::Value *elem_val = llvm_irgen_expr(ctx, &elem_expr);
+    llvm::Value *elem_val = llvm_irgen_arithmetic_expr(ctx, &elem_expr);
 
     if (!elem_val)
       continue;
@@ -453,7 +494,7 @@ static void llvm_irgen_instr_assign(llvm_backend_ctx &ctx,
 
   llvm::AllocaInst *var_alloca = it->second;
 
-  llvm::Value *expr_val = llvm_irgen_expr(ctx, assign->expr);
+  llvm::Value *expr_val = llvm_irgen_arithmetic_expr(ctx, assign->expr);
   if (!expr_val) {
     scu_perror(const_cast<char *>(
                    "Failed to evaluate expression in assignment to '%s'\n"),
@@ -477,7 +518,7 @@ static void llvm_irgen_instr_assign_to_array_subscript(
   llvm::AllocaInst *array_alloca = it->second;
   llvm::Type *alloca_type = array_alloca->getAllocatedType();
 
-  llvm::Value *index_val = llvm_irgen_expr(ctx, assign->index_expr);
+  llvm::Value *index_val = llvm_irgen_arithmetic_expr(ctx, assign->index_expr);
   if (!index_val) {
     scu_perror(const_cast<char *>("Failed to evaluate index expression\n"));
     return;
@@ -502,7 +543,8 @@ static void llvm_irgen_instr_assign_to_array_subscript(
         ctx.builder->CreateGEP(elem_type, array_alloca, index_val, "elem_ptr");
   }
 
-  llvm::Value *rhs_val = llvm_irgen_expr(ctx, assign->expr_to_assign);
+  llvm::Value *rhs_val =
+      llvm_irgen_arithmetic_expr(ctx, assign->expr_to_assign);
   if (!rhs_val) {
     scu_perror(const_cast<char *>("Failed to evaluate RHS\n"));
     return;
@@ -521,7 +563,7 @@ static void llvm_irgen_instr_if(llvm_backend_ctx &ctx, if_node *if_stmt) {
   llvm::BasicBlock *merge_bb =
       llvm::BasicBlock::Create(*ctx.context, "if.end", fn);
 
-  llvm::Value *cond_val = llvm_irgen_relational(ctx, &if_stmt->rel);
+  llvm::Value *cond_val = llvm_irgen_expr(ctx, &if_stmt->condition);
   if (!cond_val) {
     scu_perror(const_cast<char *>("Failed to generate if condition\n"));
     return;
@@ -562,7 +604,7 @@ static void llvm_irgen_instr_if(llvm_backend_ctx &ctx, if_node *if_stmt) {
     llvm::BasicBlock *elif_cond_bb = else_target;
     ctx.builder->SetInsertPoint(elif_cond_bb);
 
-    llvm::Value *elif_cond = llvm_irgen_relational(ctx, &elif.rel);
+    llvm::Value *elif_cond = llvm_irgen_expr(ctx, &elif.condition);
     if (!elif_cond) {
       scu_perror(const_cast<char *>("Failed to generate else-if condition\n"));
       return;
@@ -631,7 +673,7 @@ static void llvm_irgen_instr_match(llvm_backend_ctx &ctx,
     return;
   }
 
-  llvm::Value *match_val = llvm_irgen_expr(ctx, match_stmt->expr);
+  llvm::Value *match_val = llvm_irgen_arithmetic_expr(ctx, match_stmt->expr);
   if (!match_val) {
     scu_perror(const_cast<char *>("Failed to generate match expression\n"));
     return;
@@ -672,9 +714,9 @@ static void llvm_irgen_instr_match(llvm_backend_ctx &ctx,
       llvm::Value *match_cond = nullptr;
 
       for (u64 j = 0; j < case_node.values.values.count; j++) {
-        expr_node *expr;
+        arithmetic_expr_node *expr;
         dynamic_array_get(&case_node.values.values, j, &expr);
-        llvm::Value *case_val = llvm_irgen_expr(ctx, expr);
+        llvm::Value *case_val = llvm_irgen_arithmetic_expr(ctx, expr);
 
         llvm::Value *cmp = ctx.builder->CreateICmpEQ(match_val, case_val);
 
@@ -690,8 +732,10 @@ static void llvm_irgen_instr_match(llvm_backend_ctx &ctx,
     }
 
     case MATCH_CASE_RANGE: {
-      llvm::Value *start_val = llvm_irgen_expr(ctx, case_node.range.start);
-      llvm::Value *end_val = llvm_irgen_expr(ctx, case_node.range.end);
+      llvm::Value *start_val =
+          llvm_irgen_arithmetic_expr(ctx, case_node.range.start);
+      llvm::Value *end_val =
+          llvm_irgen_arithmetic_expr(ctx, case_node.range.end);
 
       llvm::Value *ge_start = ctx.builder->CreateICmpSGE(match_val, start_val);
       llvm::Value *le_end = ctx.builder->CreateICmpSLE(match_val, end_val);
@@ -797,7 +841,8 @@ static void llvm_irgen_instr_loop(llvm_backend_ctx &ctx, loop_node *loop) {
     iterator_ptr =
         ctx.builder->CreateAlloca(i32_type, nullptr, loop->_for.iterator.name);
 
-    llvm::Value *start_val = llvm_irgen_expr(ctx, loop->_for.range_start);
+    llvm::Value *start_val =
+        llvm_irgen_arithmetic_expr(ctx, loop->_for.range_start);
     ctx.builder->CreateStore(start_val, iterator_ptr);
 
     named_values[loop->_for.iterator.name] = iterator_ptr;
@@ -814,7 +859,7 @@ static void llvm_irgen_instr_loop(llvm_backend_ctx &ctx, loop_node *loop) {
 
   case LOOP_WHILE: {
     llvm::Value *cond =
-        llvm_irgen_relational(ctx, &loop->conditional.break_condition);
+        llvm_irgen_expr(ctx, &loop->conditional.break_condition);
     if (!cond) {
       scu_perror(const_cast<char *>("Failed to generate while condition\n"));
       current_loop_header = prev_loop_header;
@@ -833,7 +878,8 @@ static void llvm_irgen_instr_loop(llvm_backend_ctx &ctx, loop_node *loop) {
   case LOOP_FOR: {
     llvm::Value *current_val = ctx.builder->CreateLoad(
         llvm::Type::getInt32Ty(*ctx.context), iterator_ptr, "iter.val");
-    llvm::Value *end_val = llvm_irgen_expr(ctx, loop->_for.range_end);
+    llvm::Value *end_val =
+        llvm_irgen_arithmetic_expr(ctx, loop->_for.range_end);
     llvm::Value *cond =
         ctx.builder->CreateICmpSLE(current_val, end_val, "for.cond");
     ctx.builder->CreateCondBr(cond, loop_body, loop_exit);
@@ -867,7 +913,7 @@ static void llvm_irgen_instr_loop(llvm_backend_ctx &ctx, loop_node *loop) {
   } else if (loop->kind == LOOP_DO_WHILE) {
     if (!ctx.builder->GetInsertBlock()->getTerminator()) {
       llvm::Value *cond =
-          llvm_irgen_relational(ctx, &loop->conditional.break_condition);
+          llvm_irgen_expr(ctx, &loop->conditional.break_condition);
       if (cond) {
         ctx.builder->CreateCondBr(cond, loop_header, loop_exit);
       } else {
@@ -1005,10 +1051,10 @@ static void llvm_irgen_instr_return(llvm_backend_ctx &ctx, return_node *ret) {
   if (ret->returnvals.count == 0) {
     ctx.builder->CreateRetVoid();
   } else {
-    expr_node ret_expr;
+    arithmetic_expr_node ret_expr;
     dynamic_array_get(&ret->returnvals, 0, &ret_expr);
 
-    llvm::Value *ret_val = llvm_irgen_expr(ctx, &ret_expr);
+    llvm::Value *ret_val = llvm_irgen_arithmetic_expr(ctx, &ret_expr);
 
     if (!ret_val) {
       scu_perror(const_cast<char *>("Failed to generate return expression\n"));
@@ -1032,10 +1078,10 @@ static void llvm_irgen_instr_fn_call(llvm_backend_ctx &ctx,
 
   std::vector<llvm::Value *> args;
   for (u64 i = 0; i < call->parameters.count; i++) {
-    expr_node arg_expr;
+    arithmetic_expr_node arg_expr;
     dynamic_array_get(&call->parameters, i, &arg_expr);
 
-    llvm::Value *arg_val = llvm_irgen_expr(ctx, &arg_expr);
+    llvm::Value *arg_val = llvm_irgen_arithmetic_expr(ctx, &arg_expr);
 
     if (!arg_val) {
       scu_perror(const_cast<char *>("Failed to evaluate argument %" PRIu64

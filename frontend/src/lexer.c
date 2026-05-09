@@ -309,10 +309,11 @@ restart:
   LEX_ONE_CHAR_TOKEN('/', TOKEN_DIVIDE)
   LEX_ONE_CHAR_TOKEN('%', TOKEN_MODULO)
 
-  // Relational Operators
-  LEX_TWO_CHAR_TOKEN('!', '=', TOKEN_NOT_EQUAL, TOKEN_INVALID)
+  // Relational and Logical Operators
+  LEX_TWO_CHAR_TOKEN('!', '=', TOKEN_NOT_EQUAL, TOKEN_NOT)
   LEX_TWO_CHAR_TOKEN('<', '=', TOKEN_LESS_THAN_OR_EQUAL, TOKEN_LESS_THAN)
   LEX_TWO_CHAR_TOKEN('>', '=', TOKEN_GREATER_THAN_OR_EQUAL, TOKEN_GREATER_THAN)
+  LEX_TWO_CHAR_TOKEN('|', '|', TOKEN_OR, TOKEN_INVALID)
 
 #undef LEX_ONE_CHAR_TOKEN
 #undef LEX_TWO_CHAR_TOKEN
@@ -384,16 +385,17 @@ restart:
   }
 
   else if (l->ch == '&') {
-    lexer_read_char(l);
-    string_slice slice = {.str = l->buffer + l->pos, .len = 0};
-    while (isalnum(l->ch) || l->ch == '_') {
-      slice.len += 1;
+    if (lexer_peek_char(l) == '&') {
       lexer_read_char(l);
+      lexer_read_char(l);
+      return (token){.kind = TOKEN_AND, .value.str = NULL, .line = l->line};
+    } else {
+      lexer_read_char(l);
+      char *value = lexer_read_identifier(l);
+      return (token){
+          .kind = TOKEN_ADDRESS_OF, .value.str = value, .line = l->line};
     }
-    char *value = NULL;
-    string_slice_to_owned(&slice, &value);
-    return (token){
-        .kind = TOKEN_ADDRESS_OF, .value.str = value, .line = l->line};
+    return (token){.kind = TOKEN_INVALID, .value.str = NULL, .line = l->line};
   }
 
   else if (l->ch == ':') {

@@ -92,6 +92,13 @@ typedef enum token_kind {
   TOKEN_GREATER_THAN_OR_EQUAL, // >=
 
   /*
+   * Operators - Logical
+   */
+  TOKEN_NOT, // !
+  TOKEN_AND, // &&
+  TOKEN_OR,  // ||
+
+  /*
    * Special Symbols
    */
   TOKEN_DARROW,     // =>

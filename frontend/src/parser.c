@@ -72,14 +72,14 @@ static bool parse_instr(parser *p, instr_node *instr);
  *
  * @param p: pointer to the parser state.
  */
-static expr_node *parse_term(parser *p);
+static arithmetic_expr_node *parse_term(parser *p);
 
 /*
  * @brief: parse a arithmetic expression. (declaration)
  *
  * @param p: pointer to the parser state.
  */
-static expr_node *parse_expr(parser *p);
+static arithmetic_expr_node *parse_arithmetic_expr(parser *p);
 
 /*
  * @brief: parse an individual term.
@@ -92,46 +92,57 @@ static void parse_term_for_expr(parser *p, term_node *term) {
 
   parser_current(p, &token);
   term->line = token.line;
+
   if (token.kind == TOKEN_INT_LITERAL) {
     term->kind = TERM_INT;
     term->value.integer = token.value.integer;
     parser_advance(p);
-  } else if (token.kind == TOKEN_CHAR_LITERAL) {
+  }
+
+  else if (token.kind == TOKEN_CHAR_LITERAL) {
     term->kind = TERM_CHAR;
     term->value.character = token.value.character;
     parser_advance(p);
-  } else if (token.kind == TOKEN_STRING_LITERAL) {
+  }
+
+  else if (token.kind == TOKEN_STRING_LITERAL) {
     term->kind = TERM_STRING;
     term->value.str = token.value.str;
     parser_advance(p);
-  } else if (token.kind == TOKEN_IDENTIFIER) {
+  }
+
+  else if (token.kind == TOKEN_IDENTIFIER) {
     term->kind = TERM_IDENTIFIER;
     term->identifier.line = token.line;
     term->identifier.name = token.value.str;
 
     parser_advance(p);
     parser_current(p, &token);
+
     if (token.kind == TOKEN_LSQBR) {
       term->kind = TERM_ARRAY_ACCESS;
       term->array_access.array_var.name = term->identifier.name;
       term->array_access.array_var.line = term->identifier.line;
       parser_advance(p);
-      term->array_access.index_expr = parse_expr(p);
+      term->array_access.index_expr = parse_arithmetic_expr(p);
       parser_current(p, &token);
       if (token.kind != TOKEN_RSQBR) {
         scu_perror("Expected ']' at line %d\n", token.line);
       }
       parser_advance(p);
-    } else if (token.kind == TOKEN_LPAREN) {
+    }
+
+    else if (token.kind == TOKEN_LPAREN) {
       term->kind = TERM_FUNCTION_CALL;
       term->fn_call.name = term->identifier.name;
 
-      dynamic_array_init(&term->fn_call.parameters, sizeof(expr_node));
+      dynamic_array_init(&term->fn_call.parameters,
+                         sizeof(arithmetic_expr_node));
       parser_advance(p);
       parser_current(p, &token);
 
       while (token.kind != TOKEN_RPAREN) {
-        expr_node *arg = parse_expr(p);
+        arithmetic_expr_node *arg = parse_arithmetic_expr(p);
         dynamic_array_append(&term->fn_call.parameters, arg);
 
         parser_current(p, &token);
@@ -144,19 +155,26 @@ static void parse_term_for_expr(parser *p, term_node *term) {
       if (token.kind != TOKEN_RPAREN) {
         scu_perror("Expected ')' at line %d\n", token.line);
       }
+
       parser_advance(p);
     }
-  } else if (token.kind == TOKEN_ADDRESS_OF) {
+  }
+
+  else if (token.kind == TOKEN_ADDRESS_OF) {
     term->kind = TERM_ADDOF;
     term->identifier.line = token.line;
     term->identifier.name = token.value.str;
     parser_advance(p);
-  } else if (token.kind == TOKEN_POINTER) {
+  }
+
+  else if (token.kind == TOKEN_POINTER) {
     term->kind = TERM_DEREF;
     term->identifier.line = token.line;
     term->identifier.name = token.value.str;
     parser_advance(p);
-  } else {
+  }
+
+  else {
     scu_perror("Expected a term (input, int, char, identifier, addof, "
                "pointer), got %s [line %d]\n",
                lexer_token_kind_to_str(token.kind), token.line);
@@ -169,15 +187,16 @@ static void parse_term_for_expr(parser *p, term_node *term) {
  *
  * @param p: pointer to the parser state.
  */
-static expr_node *parse_factor(parser *p) {
+static arithmetic_expr_node *parse_factor(parser *p) {
   token token = {0};
   parser_current(p, &token);
 
   if (token.kind == TOKEN_SUBTRACT) {
     parser_advance(p);
-    expr_node *operand = parse_term(p);
+    arithmetic_expr_node *operand = parse_term(p);
 
-    expr_node *node = arena_push_struct(ast_arena, expr_node);
+    arithmetic_expr_node *node =
+        arena_push_struct(ast_arena, arithmetic_expr_node);
     node->kind = EXPR_UNARY_MINUS;
     node->line = token.line;
     node->unary = operand;
@@ -187,7 +206,8 @@ static expr_node *parse_factor(parser *p) {
   if (token.kind == TOKEN_INT_LITERAL || token.kind == TOKEN_CHAR_LITERAL ||
       token.kind == TOKEN_IDENTIFIER || token.kind == TOKEN_POINTER ||
       token.kind == TOKEN_STRING_LITERAL || token.kind == TOKEN_ADDRESS_OF) {
-    expr_node *node = arena_push_struct(ast_arena, expr_node);
+    arithmetic_expr_node *node =
+        arena_push_struct(ast_arena, arithmetic_expr_node);
     node->kind = EXPR_TERM;
     node->line = token.line;
 
@@ -227,7 +247,7 @@ static expr_node *parse_factor(parser *p) {
 
         parser_advance(p);
 
-        node->term.array_access.index_expr = parse_expr(p);
+        node->term.array_access.index_expr = parse_arithmetic_expr(p);
 
         parser_current(p, &token);
 
@@ -239,12 +259,13 @@ static expr_node *parse_factor(parser *p) {
         node->term.kind = TERM_FUNCTION_CALL;
         node->term.fn_call.name = node->term.identifier.name;
 
-        dynamic_array_init(&node->term.fn_call.parameters, sizeof(expr_node));
+        dynamic_array_init(&node->term.fn_call.parameters,
+                           sizeof(arithmetic_expr_node));
         parser_advance(p);
         parser_current(p, &token);
 
         while (token.kind != TOKEN_RPAREN) {
-          expr_node *arg = parse_expr(p);
+          arithmetic_expr_node *arg = parse_arithmetic_expr(p);
           dynamic_array_append(&node->term.fn_call.parameters, arg);
 
           parser_current(p, &token);
@@ -281,7 +302,7 @@ static expr_node *parse_factor(parser *p) {
 
   else if (token.kind == TOKEN_LPAREN) {
     parser_advance(p);
-    expr_node *node = parse_expr(p);
+    arithmetic_expr_node *node = parse_arithmetic_expr(p);
     parser_current(p, &token);
     if (token.kind != TOKEN_RPAREN) {
       scu_perror("Syntax error: expected ')' at line %d\n", token.line);
@@ -302,8 +323,8 @@ static expr_node *parse_factor(parser *p) {
  *
  * @param p: pointer to the parser state.
  */
-static expr_node *parse_term(parser *p) {
-  expr_node *left = parse_factor(p);
+static arithmetic_expr_node *parse_term(parser *p) {
+  arithmetic_expr_node *left = parse_factor(p);
   while (1) {
     token token = {0};
     parser_current(p, &token);
@@ -311,9 +332,10 @@ static expr_node *parse_term(parser *p) {
     if (token.kind == TOKEN_MULTIPLY || token.kind == TOKEN_DIVIDE ||
         token.kind == TOKEN_MODULO) {
       parser_advance(p);
-      expr_node *right = parse_factor(p);
+      arithmetic_expr_node *right = parse_factor(p);
 
-      expr_node *parent = arena_push_struct(ast_arena, expr_node);
+      arithmetic_expr_node *parent =
+          arena_push_struct(ast_arena, arithmetic_expr_node);
 
       parent->line = token.line;
 
@@ -339,17 +361,18 @@ static expr_node *parse_term(parser *p) {
  *
  * @param p: pointer to the parser state.
  */
-static expr_node *parse_expr(parser *p) {
-  expr_node *left = parse_term(p);
+static arithmetic_expr_node *parse_arithmetic_expr(parser *p) {
+  arithmetic_expr_node *left = parse_term(p);
   while (1) {
     token token = {0};
     parser_current(p, &token);
 
     if (token.kind == TOKEN_ADD || token.kind == TOKEN_SUBTRACT) {
       parser_advance(p);
-      expr_node *right = parse_term(p);
+      arithmetic_expr_node *right = parse_term(p);
 
-      expr_node *parent = arena_push_struct(ast_arena, expr_node);
+      arithmetic_expr_node *parent =
+          arena_push_struct(ast_arena, arithmetic_expr_node);
       parent->kind = (token.kind == TOKEN_ADD) ? EXPR_ADD : EXPR_SUBTRACT;
       parent->line = token.line;
       parent->binary.left = left;
@@ -405,6 +428,96 @@ static void parse_rel(parser *p, rel_node *rel) {
              lexer_token_kind_to_str(token.kind), token.line);
 }
 
+static void parse_expr(parser *p, expr_node *expr);
+
+static void parse_logical_or(parser *p, expr_node *expr);
+
+static void parse_logical_not(parser *p, expr_node *expr) {
+  token token = {0};
+  parser_current(p, &token);
+
+  if (token.kind == TOKEN_LPAREN) {
+    parser_advance(p);
+    parse_logical_or(p, expr);
+
+    parser_current(p, &token);
+    if (token.kind != TOKEN_RPAREN)
+      scu_perror("Expected ')' [line %u]\n", token.line);
+    parser_advance(p);
+    return;
+  }
+
+  if (token.kind == TOKEN_NOT) {
+    parser_advance(p);
+
+    expr_node *operand = arena_push_struct(ast_arena, expr_node);
+    parse_logical_not(p, operand);
+
+    expr->kind = EXPR_LOGICAL;
+    expr->logical.kind = LOG_NOT;
+    expr->logical.line = token.line;
+    expr->logical.unary.operand = operand;
+    return;
+  }
+
+  expr->kind = EXPR_RELATIONAL;
+  parse_rel(p, &expr->relational);
+}
+
+static void parse_logical_and(parser *p, expr_node *expr) {
+  parse_logical_not(p, expr);
+
+  token token = {0};
+  parser_current(p, &token);
+
+  while (token.kind == TOKEN_AND) {
+    parser_advance(p);
+
+    expr_node *lhs = arena_push_struct(ast_arena, expr_node);
+    expr_node *rhs = arena_push_struct(ast_arena, expr_node);
+    *lhs = *expr;
+
+    parse_logical_not(p, rhs);
+
+    expr->kind = EXPR_LOGICAL;
+    expr->logical.kind = LOG_AND;
+    expr->logical.line = token.line;
+    expr->logical.binary.lhs = lhs;
+    expr->logical.binary.rhs = rhs;
+
+    parser_current(p, &token);
+  }
+}
+
+static void parse_logical_or(parser *p, expr_node *expr) {
+  parse_logical_and(p, expr);
+
+  token token = {0};
+  parser_current(p, &token);
+
+  while (token.kind == TOKEN_OR) {
+    parser_advance(p);
+
+    expr_node *lhs = arena_push_struct(ast_arena, expr_node);
+    expr_node *rhs = arena_push_struct(ast_arena, expr_node);
+    *lhs = *expr;
+
+    parse_logical_and(p, rhs);
+
+    expr->kind = EXPR_LOGICAL;
+    expr->logical.kind = LOG_OR;
+    expr->logical.line = token.line;
+    expr->logical.binary.lhs = lhs;
+    expr->logical.binary.rhs = rhs;
+
+    parser_current(p, &token);
+  }
+}
+
+static void parse_expr(parser *p, expr_node *expr) {
+  parse_logical_or(p, expr);
+}
+
 /*
  * @brief: parse a variable initialize instruction.
  *
@@ -418,7 +531,7 @@ static void parse_initialize(parser *p, instr_node *instr, type _type,
   instr->initialize_variable.var.name = _name;
   parser_advance(p);
 
-  instr->initialize_variable.expr = parse_expr(p);
+  instr->initialize_variable.expr = parse_arithmetic_expr(p);
 }
 
 /*
@@ -428,7 +541,8 @@ static void parse_initialize(parser *p, instr_node *instr, type _type,
  * @param instr: pointer to a newly malloc'd instr struct.
  */
 static void parse_initialize_array(parser *p, instr_node *instr, type _type,
-                                   char *_name, expr_node *size_expr) {
+                                   char *_name,
+                                   arithmetic_expr_node *size_expr) {
   instr->kind = INSTR_INITIALIZE_ARRAY;
   instr->initialize_array.var.type = _type;
   instr->initialize_array.var.name = _name;
@@ -445,7 +559,7 @@ static void parse_initialize_array(parser *p, instr_node *instr, type _type,
   parser_advance(p);
 
   dynamic_array_init(&instr->initialize_array.literal.elements,
-                     sizeof(expr_node));
+                     sizeof(arithmetic_expr_node));
 
   while (1) {
     parser_current(p, &token);
@@ -453,7 +567,7 @@ static void parse_initialize_array(parser *p, instr_node *instr, type _type,
       break;
     }
 
-    expr_node *elem = parse_expr(p);
+    arithmetic_expr_node *elem = parse_arithmetic_expr(p);
     dynamic_array_append(&instr->initialize_array.literal.elements, elem);
 
     parser_current(p, &token);
@@ -483,7 +597,7 @@ static void parse_declare(parser *p, instr_node *instr) {
   char *_name;
   u32 _line;
   bool is_array = false;
-  expr_node *size_expr = NULL;
+  arithmetic_expr_node *size_expr = NULL;
 
   parser_current(p, &token);
   instr->line = token.line;
@@ -506,7 +620,7 @@ static void parse_declare(parser *p, instr_node *instr) {
     is_array = true;
     parser_advance(p);
 
-    size_expr = parse_expr(p);
+    size_expr = parse_arithmetic_expr(p);
 
     parser_current(p, &token);
     if (token.kind != TOKEN_RSQBR) {
@@ -564,10 +678,10 @@ static void parse_fn_call(parser *p, instr_node *instr) {
   parser_advance(p);
   parser_current(p, &token);
 
-  dynamic_array_init(&instr->fn_call.parameters, sizeof(expr_node));
+  dynamic_array_init(&instr->fn_call.parameters, sizeof(arithmetic_expr_node));
 
   while (token.kind != TOKEN_RPAREN) {
-    expr_node *arg = parse_expr(p);
+    arithmetic_expr_node *arg = parse_arithmetic_expr(p);
     dynamic_array_append(&instr->fn_call.parameters, arg);
 
     parser_current(p, &token);
@@ -613,7 +727,7 @@ static void parse_assign(parser *p, instr_node *instr) {
 
     parser_advance(p);
 
-    expr_node *index_expr = parse_expr(p);
+    arithmetic_expr_node *index_expr = parse_arithmetic_expr(p);
     instr->assign_to_array_subscript.index_expr = index_expr;
 
     parser_current(p, &token);
@@ -630,7 +744,7 @@ static void parse_assign(parser *p, instr_node *instr) {
     }
     parser_advance(p);
 
-    instr->assign_to_array_subscript.expr_to_assign = parse_expr(p);
+    instr->assign_to_array_subscript.expr_to_assign = parse_arithmetic_expr(p);
   } else if (token.kind == TOKEN_LPAREN) {
     p->index--;
     parse_fn_call(p, instr);
@@ -645,7 +759,7 @@ static void parse_assign(parser *p, instr_node *instr) {
     }
     parser_advance(p);
 
-    instr->assign.expr = parse_expr(p);
+    instr->assign.expr = parse_arithmetic_expr(p);
   }
 }
 
@@ -701,7 +815,7 @@ static void parse_if(parser *p, instr_node *instr) {
   instr->if_.else_ = NULL;
 
   parser_advance(p);
-  parse_rel(p, &instr->if_.rel);
+  parse_expr(p, &instr->if_.condition);
 
   parser_current(p, &token);
   instr->line = token.line;
@@ -719,7 +833,7 @@ static void parse_if(parser *p, instr_node *instr) {
     if (token.kind == TOKEN_IF) {
       if_node else_if = {0};
       parser_advance(p);
-      parse_rel(p, &else_if.rel);
+      parse_expr(p, &else_if.condition);
       parse_cond_block(p, &else_if.then);
       dynamic_array_append(&instr->if_.else_ifs, &else_if);
       parser_current(p, &token);
@@ -741,11 +855,11 @@ static void parse_match(parser *p, instr_node *instr) {
   token token = {0};
 
   instr->kind = INSTR_MATCH;
-  instr->match.expr = arena_push_struct(ast_arena, expr_node);
+  instr->match.expr = arena_push_struct(ast_arena, arithmetic_expr_node);
 
   parser_advance(p);
 
-  instr->match.expr = parse_expr(p);
+  instr->match.expr = parse_arithmetic_expr(p);
 
   parser_current(p, &token);
   instr->line = token.line;
@@ -766,8 +880,9 @@ static void parse_match(parser *p, instr_node *instr) {
       case_node.kind = MATCH_CASE_DEFAULT;
       parser_advance(p);
     } else {
-      expr_node *first_expr = arena_push_struct(ast_arena, expr_node);
-      first_expr = parse_expr(p);
+      arithmetic_expr_node *first_expr =
+          arena_push_struct(ast_arena, arithmetic_expr_node);
+      first_expr = parse_arithmetic_expr(p);
 
       parser_current(p, &token);
 
@@ -777,19 +892,22 @@ static void parse_match(parser *p, instr_node *instr) {
 
         parser_advance(p);
 
-        case_node.range.end = arena_push_struct(ast_arena, expr_node);
-        case_node.range.end = parse_expr(p);
+        case_node.range.end =
+            arena_push_struct(ast_arena, arithmetic_expr_node);
+        case_node.range.end = parse_arithmetic_expr(p);
       } else {
         case_node.kind = MATCH_CASE_VALUES;
-        dynamic_array_init(&case_node.values.values, sizeof(expr_node *));
+        dynamic_array_init(&case_node.values.values,
+                           sizeof(arithmetic_expr_node *));
         dynamic_array_append(&case_node.values.values, &first_expr);
 
         parser_current(p, &token);
         while (token.kind == TOKEN_COMMA) {
           parser_advance(p);
 
-          expr_node *next_expr = arena_push_struct(ast_arena, expr_node);
-          next_expr = parse_expr(p);
+          arithmetic_expr_node *next_expr =
+              arena_push_struct(ast_arena, arithmetic_expr_node);
+          next_expr = parse_arithmetic_expr(p);
           dynamic_array_append(&case_node.values.values, &next_expr);
 
           parser_current(p, &token);
@@ -899,8 +1017,9 @@ static void parse_loop(parser *p, instr_node *instr, loop_kind kind) {
 
     parser_advance(p);
 
-    instr->loop._for.range_start = arena_push_struct(ast_arena, expr_node);
-    instr->loop._for.range_start = parse_expr(p);
+    instr->loop._for.range_start =
+        arena_push_struct(ast_arena, arithmetic_expr_node);
+    instr->loop._for.range_start = parse_arithmetic_expr(p);
 
     parser_current(p, &token);
 
@@ -911,12 +1030,13 @@ static void parse_loop(parser *p, instr_node *instr, loop_kind kind) {
 
     parser_advance(p);
 
-    instr->loop._for.range_end = arena_push_struct(ast_arena, expr_node);
-    instr->loop._for.range_end = parse_expr(p);
+    instr->loop._for.range_end =
+        arena_push_struct(ast_arena, arithmetic_expr_node);
+    instr->loop._for.range_end = parse_arithmetic_expr(p);
 
   } else if (kind == LOOP_WHILE) {
     parser_current(p, &token);
-    parse_rel(p, &instr->loop.conditional.break_condition);
+    parse_expr(p, &instr->loop.conditional.break_condition);
   }
 
   instr->loop.variables = ht_create(sizeof(variable));
@@ -956,7 +1076,7 @@ static void parse_loop(parser *p, instr_node *instr, loop_kind kind) {
 
   if (kind == LOOP_DO_WHILE) {
     parser_current(p, &token);
-    parse_rel(p, &instr->loop.conditional.break_condition);
+    parse_expr(p, &instr->loop.conditional.break_condition);
   }
 }
 
@@ -1093,14 +1213,14 @@ static void parse_ret(parser *p, instr_node *instr) {
   parser_current(p, &token);
   instr->kind = INSTR_RETURN;
   instr->line = token.line;
-  dynamic_array_init(&instr->ret_node.returnvals, sizeof(expr_node));
+  dynamic_array_init(&instr->ret_node.returnvals, sizeof(arithmetic_expr_node));
 
   parser_advance(p);
 
   parser_current(p, &token);
 
   while (token.kind != TOKEN_RBRACE) {
-    expr_node *expr = parse_expr(p);
+    arithmetic_expr_node *expr = parse_arithmetic_expr(p);
     dynamic_array_append(&instr->ret_node.returnvals, expr);
 
     parser_current(p, &token);

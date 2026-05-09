@@ -110,6 +110,13 @@ const char *lexer_token_kind_to_str(token_kind kind) {
   case TOKEN_GREATER_THAN_OR_EQUAL:
     return "greater_than_or_equal";
 
+  case TOKEN_AND:
+    return "and";
+  case TOKEN_NOT:
+    return "not";
+  case TOKEN_OR:
+    return "or";
+
   case TOKEN_DARROW:
     return "=> (darrow)";
   case TOKEN_UNDERSCORE:
