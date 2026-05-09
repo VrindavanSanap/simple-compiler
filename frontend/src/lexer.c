@@ -463,8 +463,15 @@ restart:
   }
 
   else {
-    char *value = lexer_read_identifier(l);
-    return (token){.kind = TOKEN_INVALID, .value.str = value, .line = l->line};
+    if (isalpha(l->ch) || l->ch == '_') {
+      char *value = lexer_read_identifier(l);
+      return (token){
+          .kind = TOKEN_INVALID, .value.str = value, .line = l->line};
+    }
+
+    lexer_read_char(l);
+    return (token){
+        .kind = TOKEN_INVALID, .value.character = l->ch, .line = l->line};
   }
 }
 
