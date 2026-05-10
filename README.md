@@ -17,7 +17,7 @@ Compile and run:
 
 ```
 # clone and cd to the repo
-$ git clone https://github.com/smyk07/scull.git
+$ git clone https://github.com/scull-lang/scull.git
 $ cd scull
 
 # build llvm and sclc
