@@ -177,7 +177,7 @@ static void parse_term_for_expr(parser *p, term_node *term) {
   else {
     scu_perror("Expected a term (input, int, char, identifier, addof, "
                "pointer), got %s [line %d]\n",
-               lexer_token_kind_to_str(token.kind), token.line);
+               token_kind_to_str(token.kind), token.line);
     parser_advance(p);
   }
 }
@@ -425,7 +425,7 @@ static void parse_rel(parser *p, rel_node *rel) {
   }
 
   scu_perror("Expected a relation (==, !=, <, <=, >, >=), got %s [line %d]\n",
-             lexer_token_kind_to_str(token.kind), token.line);
+             token_kind_to_str(token.kind), token.line);
 }
 
 static void parse_expr(parser *p, expr_node *expr);
@@ -733,14 +733,14 @@ static void parse_assign(parser *p, instr_node *instr) {
     parser_current(p, &token);
     if (token.kind != TOKEN_RSQBR) {
       scu_perror("Expected ], found %s [line %d]\n",
-                 lexer_token_kind_to_str(token.kind), token.line);
+                 token_kind_to_str(token.kind), token.line);
     }
     parser_advance(p);
     parser_current(p, &token);
 
     if (token.kind != TOKEN_ASSIGN) {
       scu_perror("Expected assign, found %s [line %d]\n",
-                 lexer_token_kind_to_str(token.kind), token.line);
+                 token_kind_to_str(token.kind), token.line);
     }
     parser_advance(p);
 
@@ -755,7 +755,7 @@ static void parse_assign(parser *p, instr_node *instr) {
 
     if (token.kind != TOKEN_ASSIGN) {
       scu_perror("Expected assign, found %s [line %d]\n",
-                 lexer_token_kind_to_str(token.kind), token.line);
+                 token_kind_to_str(token.kind), token.line);
     }
     parser_advance(p);
 
@@ -799,7 +799,7 @@ static void parse_cond_block(parser *p, cond_block_node *block) {
   }
 
   scu_perror("Expected a statement or '{', found %s [line %d]\n",
-             lexer_token_kind_to_str(token.kind), token.line);
+             token_kind_to_str(token.kind), token.line);
 }
 
 /*
@@ -954,7 +954,7 @@ static void parse_goto(parser *p, instr_node *instr) {
   instr->line = token.line;
   if (token.kind != TOKEN_LABEL) {
     scu_perror("Expected label, found %s [line %d]\n",
-               lexer_token_kind_to_str(token.kind), token.line);
+               token_kind_to_str(token.kind), token.line);
   }
   parser_advance(p);
 
@@ -1130,7 +1130,7 @@ static void parse_fn(parser *p, instr_node *instr) {
       break;
     default:
       scu_perror("Expected type, got %s line %d\n",
-                 lexer_token_kind_to_str(token.kind), token.line);
+                 token_kind_to_str(token.kind), token.line);
       return;
     }
     parser_advance(p);
@@ -1298,7 +1298,7 @@ static bool parse_instr(parser *p, instr_node *instr) {
     return true;
   default:
     scu_perror("unexpected token: %s - '%s' [line %d]\n",
-               lexer_token_kind_to_str(token.kind), token.value.str,
+               token_kind_to_str(token.kind), token_get_value(token),
                token.line);
   }
 

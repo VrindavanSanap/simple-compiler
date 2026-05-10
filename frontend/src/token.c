@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const char *lexer_token_kind_to_str(token_kind kind) {
+const char *token_kind_to_str(token_kind kind) {
   switch (kind) {
   case TOKEN_GOTO:
     return "goto";
@@ -131,36 +131,78 @@ const char *lexer_token_kind_to_str(token_kind kind) {
   }
 }
 
-void lexer_print_tokens(dynamic_array *tokens) {
+char *token_get_value(token token) {
+  char *buf = NULL;
+  int len = 0;
+
+  switch (token.kind) {
+  case TOKEN_INT_LITERAL:
+    len = snprintf(NULL, 0, "(%d)", token.value.integer) + 1;
+    buf = malloc(len);
+    snprintf(buf, len, "(%d)", token.value.integer);
+    break;
+
+  case TOKEN_CHAR_LITERAL:
+    len = snprintf(NULL, 0, "(%c)", token.value.character) + 1;
+    buf = malloc(len);
+    snprintf(buf, len, "(%c)", token.value.character);
+    break;
+
+  case TOKEN_STRING_LITERAL:
+    len = snprintf(NULL, 0, " \"%s\"", token.value.str) + 1;
+    buf = malloc(len);
+    snprintf(buf, len, " \"%s\"", token.value.str);
+    break;
+
+  case TOKEN_POINTER:
+  case TOKEN_ADDRESS_OF:
+  case TOKEN_LABEL:
+  case TOKEN_IDENTIFIER:
+  case TOKEN_INVALID:
+    switch (token.value.kind) {
+    case TLV_INT:
+      len = snprintf(NULL, 0, "%d", token.value.integer) + 1;
+      buf = malloc(len);
+      snprintf(buf, len, "%d", token.value.integer);
+      break;
+
+    case TLV_CHAR:
+      len = snprintf(NULL, 0, "%c", token.value.character) + 1;
+      buf = malloc(len);
+      snprintf(buf, len, "%c", token.value.character);
+      break;
+
+    case TLV_STR:
+      len = snprintf(NULL, 0, "%s", token.value.str) + 1;
+      buf = malloc(len);
+      snprintf(buf, len, "%s", token.value.str);
+      break;
+
+    case TLV_NULL:
+      break;
+    }
+    break;
+
+  default:
+    break;
+  }
+
+  return buf;
+}
+
+void token_print_tokens(dynamic_array *tokens) {
   for (u64 i = 0; i < tokens->count; i++) {
     token token;
     dynamic_array_get(tokens, i, &token);
 
     printf("[line %" PRIu64 "] ", token.line);
 
-    const char *kind = lexer_token_kind_to_str(token.kind);
+    const char *kind = token_kind_to_str(token.kind);
     printf("%s", kind);
 
-    switch (token.kind) {
-    case TOKEN_INT_LITERAL:
-      printf("(%d)", token.value.integer);
-      break;
-    case TOKEN_CHAR_LITERAL:
-      printf("(%c)", token.value.character);
-      break;
-    case TOKEN_STRING_LITERAL:
-      printf(" \"%s\"", token.value.str);
-      break;
-    case TOKEN_POINTER:
-    case TOKEN_ADDRESS_OF:
-    case TOKEN_LABEL:
-    case TOKEN_IDENTIFIER:
-    case TOKEN_INVALID:
-      printf("(%s)", token.value.str);
-      break;
-    default:
-      break;
-    }
+    char *value = token_get_value(token);
+    printf("%s", value);
+    free(value);
 
     printf("\n");
   }

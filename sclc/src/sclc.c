@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     // Lexing debug statements
     if (cst.options.verbose) {
       scu_pdebug("Lexing Debug Statements for %s:\n", fst->filepath);
-      lexer_print_tokens(&fst->tokens);
+      token_print_tokens(&fst->tokens);
     }
 
     // Parsing

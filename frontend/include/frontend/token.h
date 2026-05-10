@@ -112,14 +112,26 @@ typedef enum token_kind {
   TOKEN_END
 } token_kind;
 
+typedef enum token_literal_value_kind {
+  TLV_NULL = 0,
+
+  TLV_INT,
+  TLV_CHAR,
+  TLV_STR,
+} token_literal_value_kind;
+
 /*
- * @union token_literal_value: holds the "value" of any particular literal
+ * @struct token_literal_value: holds the "value" of any particular literal
  * token. Values can be integers, characters, or strings for labels.
  */
-typedef union token_literal_value {
-  u32 integer;
-  char character;
-  char *str;
+typedef struct token_literal_value {
+  token_literal_value_kind kind;
+
+  union {
+    u32 integer;
+    char character;
+    char *str;
+  };
 } token_literal_value;
 
 /*
@@ -137,18 +149,26 @@ typedef struct token {
  * @param kind: token_kind enum value.
  * @return: string representation of the token.
  */
-const char *lexer_token_kind_to_str(token_kind kind);
+const char *token_kind_to_str(token_kind kind);
+
+/*
+ * @brief: Converts a token_literal_value  to its string representation.
+ *
+ * @param token: token value to extract.
+ * @return: string representation of the token value.
+ */
+char *token_get_value(token token);
 
 /*
  * @brief: Print the whole token stream, required for debugging.
  *
  * @param tokens: dynamic_array of tokens.
  */
-void lexer_print_tokens(dynamic_array *tokens);
+void token_print_tokens(dynamic_array *tokens);
 
 /*
- * @brief: Free / Destroy tokens before termination. This function is needed due
- * to there being malloc'd strings in token->value.
+ * @brief: Free / Destroy tokens before termination. This function is needed
+ * due to there being malloc'd strings in token->value.
  *
  * @param tokens: dynamic_array of tokens.
  */

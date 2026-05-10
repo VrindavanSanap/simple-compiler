@@ -145,7 +145,7 @@ restart:
 
   if (l->ch == EOF) {
     lexer_read_char(l);
-    return (token){.kind = TOKEN_END, .value.str = NULL, .line = l->line};
+    return (token){.kind = TOKEN_END, .value.kind = TLV_NULL, .line = l->line};
   }
 
   else if (isdigit(l->ch)) {
@@ -160,8 +160,10 @@ restart:
     u32 value = atoi(temp);
     free(temp);
 
-    return (token){
-        .kind = TOKEN_INT_LITERAL, .value.integer = value, .line = l->line};
+    return (token){.kind = TOKEN_INT_LITERAL,
+                   .value.kind = TLV_INT,
+                   .value.integer = value,
+                   .line = l->line};
   }
 
   else if (l->ch == '\'') {
@@ -190,19 +192,24 @@ restart:
         escaped_char = '\0';
         break;
       default:
-        return (token){
-            .kind = TOKEN_INVALID, .value.character = l->ch, .line = l->line};
+        return (token){.kind = TOKEN_INVALID,
+                       .value.kind = TLV_CHAR,
+                       .value.character = l->ch,
+                       .line = l->line};
       }
       char_value = escaped_char;
     }
     lexer_read_char(l);
     if (l->ch != '\'') {
-      return (token){
-          .kind = TOKEN_INVALID, .value.character = l->ch, .line = l->line};
+      return (token){.kind = TOKEN_INVALID,
+                     .value.kind = TLV_CHAR,
+                     .value.character = l->ch,
+                     .line = l->line};
     }
     lexer_read_char(l);
 
     return (token){.kind = TOKEN_CHAR_LITERAL,
+                   .value.kind = TLV_CHAR,
                    .value.character = char_value,
                    .line = l->line};
   }
@@ -218,6 +225,7 @@ restart:
       lexer_read_char(l);
       string_value[0] = '\0';
       return (token){.kind = TOKEN_STRING_LITERAL,
+                     .value.kind = TLV_STR,
                      .value.str = string_value,
                      .line = l->line};
     }
@@ -252,8 +260,10 @@ restart:
           break;
         default:
           free(string_value);
-          return (token){
-              .kind = TOKEN_INVALID, .value.character = l->ch, .line = l->line};
+          return (token){.kind = TOKEN_INVALID,
+                         .value.kind = TLV_CHAR,
+                         .value.character = l->ch,
+                         .line = l->line};
         }
         string_value[length++] = escaped_char;
       } else if (l->ch == '\n') {
@@ -267,13 +277,15 @@ restart:
 
     if (l->ch != '"') {
       free(string_value);
-      return (token){.kind = TOKEN_INVALID, .value.str = NULL, .line = l->line};
+      return (token){
+          .kind = TOKEN_INVALID, .value.kind = TLV_NULL, .line = l->line};
     }
 
     lexer_read_char(l);
     string_value[length] = '\0';
 
     return (token){.kind = TOKEN_STRING_LITERAL,
+                   .value.kind = TLV_STR,
                    .value.str = string_value,
                    .line = l->line};
   }
@@ -281,7 +293,7 @@ restart:
 #define LEX_ONE_CHAR_TOKEN(chr, tok_kind)                                      \
   else if (l->ch == chr) {                                                     \
     lexer_read_char(l);                                                        \
-    return (token){.kind = tok_kind, .value.str = NULL, .line = l->line};      \
+    return (token){.kind = tok_kind, .value.kind = TLV_NULL, .line = l->line}; \
   }
 
 #define LEX_TWO_CHAR_TOKEN(ch1, ch2, tok_kind, fallback_kind)                  \
@@ -289,9 +301,11 @@ restart:
     lexer_read_char(l);                                                        \
     if (l->ch == ch2) {                                                        \
       lexer_read_char(l);                                                      \
-      return (token){.kind = tok_kind, .value.str = NULL, .line = l->line};    \
+      return (token){                                                          \
+          .kind = tok_kind, .value.kind = TLV_NULL, .line = l->line};          \
     }                                                                          \
-    return (token){.kind = fallback_kind, .value.str = NULL, .line = l->line}; \
+    return (token){                                                            \
+        .kind = fallback_kind, .value.kind = TLV_NULL, .line = l->line};       \
   }
 
   // Delimiters
@@ -323,12 +337,14 @@ restart:
     if (l->ch == '=') {
       lexer_read_char(l);
       return (token){
-          .kind = TOKEN_IS_EQUAL, .value.str = NULL, .line = l->line};
+          .kind = TOKEN_IS_EQUAL, .value.kind = TLV_NULL, .line = l->line};
     } else if (l->ch == '>') {
       lexer_read_char(l);
-      return (token){.kind = TOKEN_DARROW, .value.str = NULL, .line = l->line};
+      return (token){
+          .kind = TOKEN_DARROW, .value.kind = TLV_NULL, .line = l->line};
     }
-    return (token){.kind = TOKEN_ASSIGN, .value.str = NULL, .line = l->line};
+    return (token){
+        .kind = TOKEN_ASSIGN, .value.kind = TLV_NULL, .line = l->line};
   }
 
   else if (l->ch == '-') {
@@ -354,8 +370,10 @@ restart:
           lexer_read_char(l);
           continue;
         }
-        return (token){
-            .kind = TOKEN_INVALID, .value.character = l->ch, .line = l->line};
+        return (token){.kind = TOKEN_INVALID,
+                       .value.kind = TLV_CHAR,
+                       .value.character = l->ch,
+                       .line = l->line};
       }
     }
 
@@ -364,12 +382,14 @@ restart:
 
       if (strcmp(directive, "include") == 0) {
         free(directive);
-        return (token){
-            .kind = TOKEN_PDIR_INCLUDE, .value.str = NULL, .line = l->line};
+        return (token){.kind = TOKEN_PDIR_INCLUDE,
+                       .value.kind = TLV_NULL,
+                       .line = l->line};
       }
     }
 
-    return (token){.kind = TOKEN_SUBTRACT, .value.str = NULL, .line = l->line};
+    return (token){
+        .kind = TOKEN_SUBTRACT, .value.kind = TLV_NULL, .line = l->line};
   }
 
   else if (l->ch == '*') {
@@ -377,23 +397,28 @@ restart:
     if (((*__ctype_b_loc())[(int)((l->ch))] & (unsigned short int)_ISalnum) ||
         l->ch == '_') {
       char *value = lexer_read_identifier(l);
-      return (token){
-          .kind = TOKEN_POINTER, .value.str = value, .line = l->line};
+      return (token){.kind = TOKEN_POINTER,
+                     .value.kind = TLV_STR,
+                     .value.str = value,
+                     .line = l->line};
     }
     return (token){
-        .kind = TOKEN_MULTIPLY, .value.str = ((void *)0), .line = l->line};
+        .kind = TOKEN_MULTIPLY, .value.kind = TLV_NULL, .line = l->line};
   }
 
   else if (l->ch == '&') {
     if (lexer_peek_char(l) == '&') {
       lexer_read_char(l);
       lexer_read_char(l);
-      return (token){.kind = TOKEN_AND, .value.str = NULL, .line = l->line};
+      return (token){
+          .kind = TOKEN_AND, .value.kind = TLV_NULL, .line = l->line};
     } else {
       lexer_read_char(l);
       char *value = lexer_read_identifier(l);
-      return (token){
-          .kind = TOKEN_ADDRESS_OF, .value.str = value, .line = l->line};
+      return (token){.kind = TOKEN_ADDRESS_OF,
+                     .value.kind = TLV_STR,
+                     .value.str = value,
+                     .line = l->line};
     }
     return (token){.kind = TOKEN_INVALID, .value.str = NULL, .line = l->line};
   }
@@ -403,9 +428,13 @@ restart:
 
     if (isalnum(l->ch) || l->ch == '_') {
       char *value = lexer_read_identifier(l);
-      return (token){.kind = TOKEN_LABEL, .value.str = value, .line = l->line};
+      return (token){.kind = TOKEN_LABEL,
+                     .value.kind = TLV_STR,
+                     .value.str = value,
+                     .line = l->line};
     } else {
-      return (token){.kind = TOKEN_COLON, .value.str = NULL, .line = l->line};
+      return (token){
+          .kind = TOKEN_COLON, .value.kind = TLV_NULL, .line = l->line};
     }
   }
 
@@ -418,11 +447,12 @@ restart:
       if (l->ch == '.') {
         lexer_read_char(l);
         return (token){
-            .kind = TOKEN_ELLIPSIS, .value.str = NULL, .line = l->line};
+            .kind = TOKEN_ELLIPSIS, .value.kind = TLV_NULL, .line = l->line};
       }
     }
 
-    return (token){.kind = TOKEN_INVALID, .value.str = NULL, .line = l->line};
+    return (token){
+        .kind = TOKEN_INVALID, .value.kind = TLV_NULL, .line = l->line};
   }
 
   else if (isalnum(l->ch) || l->ch == '_') {
@@ -431,7 +461,7 @@ restart:
 #define LEX_KEYWORD(keyword_str, tok_kind)                                     \
   if (strcmp(value, keyword_str) == 0) {                                       \
     free(value);                                                               \
-    return (token){.kind = tok_kind, .value.str = NULL, .line = l->line};      \
+    return (token){.kind = tok_kind, .value.kind = TLV_NULL, .line = l->line}; \
   }
 
     // Types
@@ -460,20 +490,19 @@ restart:
 
 #undef LEX_KEYWORD
 
-    return (token){
-        .kind = TOKEN_IDENTIFIER, .value.str = value, .line = l->line};
+    return (token){.kind = TOKEN_IDENTIFIER,
+                   .value.kind = TLV_STR,
+                   .value.str = value,
+                   .line = l->line};
   }
 
   else {
-    if (isalpha(l->ch) || l->ch == '_') {
-      char *value = lexer_read_identifier(l);
-      return (token){
-          .kind = TOKEN_INVALID, .value.str = value, .line = l->line};
-    }
-
+    char invalid = l->ch;
     lexer_read_char(l);
-    return (token){
-        .kind = TOKEN_INVALID, .value.character = l->ch, .line = l->line};
+    return (token){.kind = TOKEN_INVALID,
+                   .value.kind = TLV_CHAR,
+                   .value.character = invalid,
+                   .line = l->line};
   }
 }
 
