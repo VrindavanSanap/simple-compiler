@@ -18,7 +18,7 @@
  */
 static u32 is_prime(const u32 x) {
   if (x < 2) {
-    return -1;
+    return 0;
   }
   if (x < 4) {
     return 1;
@@ -269,45 +269,45 @@ void ht_insert(ht *table, const char *key, const void *value) {
 }
 
 void *ht_search(ht *table, const char *key) {
-  u64 index = ht_get_hash(key, table->capacity, 0);
-  ht_item *item = table->items[index];
+  for (u64 i = 0; i < table->capacity; i++) {
+    u64 index = ht_get_hash(key, table->capacity, i);
+    ht_item *item = table->items[index];
 
-  u64 i = 1;
-  while (item != NULL) {
+    if (item == NULL)
+      return NULL;
+
     if (item != &HT_DELETED_ITEM) {
-      if (strcmp(item->key, key) == 0) {
+      if (strcmp(item->key, key) == 0)
         return item->value;
-      }
     }
-    index = ht_get_hash(key, table->capacity, i);
-    item = table->items[index];
-    i++;
   }
 
   return NULL;
 }
 
 void ht_delete(ht *table, const char *key) {
-  u64 index = ht_get_hash(key, table->capacity, 0);
-  ht_item *item = table->items[index];
+  if (table == NULL || key == NULL)
+    return;
 
-  u64 i = 1;
-  while (item != NULL) {
-    if (item != &HT_DELETED_ITEM) {
-      if (strcmp(item->key, key) == 0) {
-        ht_del_item(item);
-        table->items[index] = &HT_DELETED_ITEM;
+  for (u64 i = 0; i < table->capacity; i++) {
+    u64 index = ht_get_hash(key, table->capacity, i);
+    ht_item *item = table->items[index];
+
+    if (item == NULL)
+      return;
+
+    if (item == &HT_DELETED_ITEM)
+      continue;
+
+    if (strcmp(item->key, key) == 0) {
+      ht_del_item(item);
+      table->items[index] = &HT_DELETED_ITEM;
+      if (table->count > 0)
         table->count--;
-
-        const u64 load = table->count * 100 / table->capacity;
-        if (load < 10)
-          ht_resize_down(table);
-
-        return;
-      }
+      const u64 load = (table->count * 100) / table->capacity;
+      if (load < 10)
+        ht_resize_down(table);
+      return;
     }
-    index = ht_get_hash(key, table->capacity, i);
-    item = table->items[index];
-    i++;
   }
 }
