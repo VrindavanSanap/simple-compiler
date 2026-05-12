@@ -93,7 +93,7 @@ static void parse_term_for_expr(parser *p, term_node *term) {
   parser_current(p, &token);
   term->line = token.line;
 
-  if (token.kind == TOKEN_INT_LITERAL) {
+  if (token.kind == TOKEN_DECIMAL_LITERAL) {
     term->kind = TERM_INT;
     term->value.integer = token.value.integer;
     parser_advance(p);
@@ -203,7 +203,7 @@ static arithmetic_expr_node *parse_factor(parser *p) {
     return node;
   }
 
-  if (token.kind == TOKEN_INT_LITERAL || token.kind == TOKEN_CHAR_LITERAL ||
+  if (token.kind == TOKEN_DECIMAL_LITERAL || token.kind == TOKEN_CHAR_LITERAL ||
       token.kind == TOKEN_IDENTIFIER || token.kind == TOKEN_POINTER ||
       token.kind == TOKEN_STRING_LITERAL || token.kind == TOKEN_ADDRESS_OF) {
     arithmetic_expr_node *node =
@@ -211,7 +211,7 @@ static arithmetic_expr_node *parse_factor(parser *p) {
     node->kind = EXPR_TERM;
     node->line = token.line;
 
-    if (token.kind == TOKEN_INT_LITERAL) {
+    if (token.kind == TOKEN_DECIMAL_LITERAL) {
       node->term.kind = TERM_INT;
       node->term.value.integer = token.value.integer;
       parser_advance(p);
@@ -601,11 +601,7 @@ static void parse_declare(parser *p, instr_node *instr) {
 
   parser_current(p, &token);
   instr->line = token.line;
-  if (token.kind == TOKEN_TYPE_INT) {
-    _type = TYPE_INT;
-  } else if (token.kind == TOKEN_TYPE_CHAR) {
-    _type = TYPE_CHAR;
-  }
+  _type = type_from_specifier_token(token.kind);
   parser_advance(p);
 
   parser_current(p, &token);
@@ -1005,7 +1001,7 @@ static void parse_loop(parser *p, instr_node *instr, loop_kind kind) {
     }
 
     instr->loop._for.iterator.name = token.value.str;
-    instr->loop._for.iterator.type = TYPE_INT;
+    instr->loop._for.iterator.type = TYPE_I32;
 
     parser_advance(p);
     parser_current(p, &token);
@@ -1120,19 +1116,10 @@ static void parse_fn(parser *p, instr_node *instr) {
     }
 
     variable param = {0};
-
-    switch (token.kind) {
-    case TOKEN_TYPE_INT:
-      param.type = TYPE_INT;
-      break;
-    case TOKEN_TYPE_CHAR:
-      param.type = TYPE_CHAR;
-      break;
-    default:
+    param.type = type_from_specifier_token(token.kind);
+    if (param.type == TYPE_INVALID)
       scu_perror("Expected type, got %s line %d\n",
                  token_kind_to_str(token.kind), token.line);
-      return;
-    }
     parser_advance(p);
 
     parser_current(p, &token);
@@ -1156,24 +1143,21 @@ static void parse_fn(parser *p, instr_node *instr) {
 
   dynamic_array_init(&instr->fn_declare_node.returntypes, sizeof(type));
   parser_current(p, &token);
+
   if (token.kind == TOKEN_COLON) {
     parser_advance(p);
     parser_current(p, &token);
+
     while (token.kind != TOKEN_LBRACE && token.kind != TOKEN_END) {
-      type ret_type = TYPE_VOID;
-      switch (token.kind) {
-      case TOKEN_TYPE_INT:
-        ret_type = TYPE_INT;
-        break;
-      case TOKEN_TYPE_CHAR:
-        ret_type = TYPE_CHAR;
-        break;
-      default:
-        break;
-      }
+      type ret_type = type_from_specifier_token(token.kind);
+      if (ret_type == TYPE_INVALID)
+        ret_type = TYPE_VOID;
+
       dynamic_array_append(&instr->fn_declare_node.returntypes, &ret_type);
+
       parser_advance(p);
       parser_current(p, &token);
+
       if (token.kind == TOKEN_COMMA) {
         parser_advance(p);
       } else {
@@ -1248,54 +1232,77 @@ static bool parse_instr(parser *p, instr_node *instr) {
   parser_current(p, &token);
 
   switch (token.kind) {
-  case TOKEN_TYPE_INT:
+  case TOKEN_TYPE_I8:
+  case TOKEN_TYPE_I16:
+  case TOKEN_TYPE_I32:
+  case TOKEN_TYPE_I64:
+  case TOKEN_TYPE_I128:
+  case TOKEN_TYPE_U8:
+  case TOKEN_TYPE_U16:
+  case TOKEN_TYPE_U32:
+  case TOKEN_TYPE_U64:
+  case TOKEN_TYPE_U128:
   case TOKEN_TYPE_CHAR:
     parse_declare(p, instr);
     return true;
+
   case TOKEN_IDENTIFIER:
   case TOKEN_POINTER:
     parse_assign(p, instr);
     return true;
+
   case TOKEN_IF:
     parse_if(p, instr);
     return true;
+
   case TOKEN_MATCH:
     parse_match(p, instr);
     return true;
+
   case TOKEN_GOTO:
     parse_goto(p, instr);
     return true;
+
   case TOKEN_LABEL:
     parse_label(p, instr);
     return true;
+
   case TOKEN_LOOP:
     parse_loop(p, instr, LOOP_UNCONDITIONAL);
     return true;
+
   case TOKEN_WHILE:
     parse_loop(p, instr, LOOP_WHILE);
     return true;
+
   case TOKEN_DO_WHILE:
     parse_loop(p, instr, LOOP_DO_WHILE);
     return true;
+
   case TOKEN_FOR:
     parse_loop(p, instr, LOOP_FOR);
     return true;
+
   case TOKEN_BREAK:
     instr->kind = INSTR_LOOP_BREAK;
     instr->line = token.line;
     parser_advance(p);
     return true;
+
   case TOKEN_CONTINUE:
     instr->kind = INSTR_LOOP_CONTINUE;
     instr->line = token.line;
     parser_advance(p);
     return true;
+
   case TOKEN_FN:
     parse_fn(p, instr);
     return true;
+
   case TOKEN_RETURN:
     parse_ret(p, instr);
     return true;
+
   default:
     scu_perror("unexpected token: %s - '%s' [line %d]\n",
                token_kind_to_str(token.kind), token_get_value(token),

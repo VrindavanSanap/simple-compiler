@@ -1,7 +1,7 @@
 -include "io.scl"
 
-fn rule110(int left, int center, int right) : int {
-  int pattern = (left * 4) + (center * 2) + right
+fn rule110(i32 left, i32 center, i32 right) : i32 {
+  i32 pattern = (left * 4) + (center * 2) + right
 
   match pattern {
     7 => return 0
@@ -15,14 +15,14 @@ fn rule110(int left, int center, int right) : int {
   }
 }
 
-fn main() : int {
-  int size = 91
-  int steps = 45
+fn main() : i32 {
+  i32 size = 91
+  i32 steps = 45
 
-  int current[91]
-  int next[91]
+  i32 current[91]
+  i32 next[91]
 
-  int i = 0
+  i32 i = 0
   while i < size {
     current[i] = 0
     next[i] = 0
@@ -31,9 +31,9 @@ fn main() : int {
 
   current[size / 2] = 1
 
-  int t = 0
+  i32 t = 0
   while t < steps {
-    int l = 0
+    i32 l = 0
     while l < size {
       if current[l] == 1 {
         printf("#")
@@ -44,8 +44,8 @@ fn main() : int {
     }
     printf("\n")
 
-    int j = 1
-    int temp = size - 1
+    i32 j = 1
+    i32 temp = size - 1
     while j < temp {
       next[j] = rule110(current[j - 1], current[j], current[j + 1])
       j = j + 1
@@ -54,7 +54,7 @@ fn main() : int {
     next[0] = 0
     next[size - 1] = 0
 
-    int k = 0
+    i32 k = 0
     while k < size {
       current[k] = next[k]
       next[k] = 0

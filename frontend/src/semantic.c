@@ -68,24 +68,6 @@ u32 evaluate_const_expr(arithmetic_expr_node *expr) {
 }
 
 /*
- * @brief: convert a type enumeration to its string representation.
- */
-static const char *type_to_str(type type) {
-  switch (type) {
-  case TYPE_INT:
-    return "int";
-  case TYPE_CHAR:
-    return "char";
-  case TYPE_STRING:
-    return "string";
-  case TYPE_POINTER:
-    return "ptr";
-  case TYPE_VOID:
-    return "void";
-  }
-}
-
-/*
  * @brief: check function call validity (declaration)
  *
  * @param fn_call: pointer to the function call node.
@@ -145,7 +127,7 @@ static void declare_array(variable *arr_to_declare,
     return;
 
   u32 array_size = evaluate_const_expr(size_expr);
-  u64 size_bytes = array_size * 4;
+  u64 size_bytes = array_size * type_size(arr_to_declare->type);
   arr_to_declare->stack_offset = current_stack_offset;
   current_stack_offset += size_bytes;
 
@@ -355,6 +337,7 @@ static void instr_check_variables(instr_node *instr, ht *variables,
       scu_perror("Use of undeclared array: %s [line %u]\n",
                  instr->assign_to_array_subscript.var.name,
                  instr->assign_to_array_subscript.var.line);
+      return;
     }
     arithmetic_expr_check_variables(instr->assign_to_array_subscript.index_expr,
                                     variables, functions);
@@ -537,30 +520,56 @@ static void instrs_check_labels(dynamic_array *instrs, dynamic_array *labels) {
 static type arithmetic_expr_type(arithmetic_expr_node *expr, type target_type,
                                  ht *variables, ht *functions);
 
+static bool type_is_integer(type t) {
+  switch (t) {
+  case TYPE_U8:
+  case TYPE_U16:
+  case TYPE_U32:
+  case TYPE_U64:
+  case TYPE_U128:
+  case TYPE_I8:
+  case TYPE_I16:
+  case TYPE_I32:
+  case TYPE_I64:
+  case TYPE_I128:
+    return true;
+  default:
+    return false;
+  }
+}
+
 /*
  * @brief: check for types in a term_node
  *
  * @param term: pointer to a term_node.
+ * @param expected: type expected from term.
  * @param target_type: type enumeration for the type which is required in the
  * instruction.
  * @param variables: pointer to the variables hash table.
- * @param line: where the term is situated in the source buffer.
+ *
+ * @return type of the term
  */
-static type term_type(term_node *term, ht *variables, ht *functions) {
+static type term_type(term_node *term, type expected, ht *variables,
+                      ht *functions) {
   switch (term->kind) {
   case TERM_INT:
-    return TYPE_INT;
+    if (type_is_integer(expected))
+      return expected;
+    return TYPE_I32;
+
   case TERM_CHAR:
     return TYPE_CHAR;
+
   case TERM_STRING:
     return TYPE_STRING;
+
   case TERM_POINTER:
   case TERM_DEREF:
   case TERM_ADDOF:
   case TERM_IDENTIFIER:
     return get_var_type(variables, &term->identifier);
 
-  case TERM_ARRAY_ACCESS:
+  case TERM_ARRAY_ACCESS: {
     type array_type = get_var_type(variables, &term->array_access.array_var);
     if (array_type == TYPE_VOID) {
       scu_perror("Array '%s' not declared [line %" PRIu64 "]\n",
@@ -568,13 +577,14 @@ static type term_type(term_node *term, ht *variables, ht *functions) {
       return TYPE_VOID;
     }
     type index_type = arithmetic_expr_type(term->array_access.index_expr,
-                                           TYPE_INT, variables, functions);
-    if (index_type != TYPE_INT) {
+                                           TYPE_I32, variables, functions);
+    if (index_type != TYPE_I32) {
       scu_perror("Array index must be of type int, got type at [line %" PRIu64
                  "]\n",
                  term->line);
     }
     return array_type;
+  }
 
   case TERM_ARRAY_LITERAL:
     scu_perror("Array literal cannot be used in expressions [line %" PRIu64
@@ -656,7 +666,7 @@ static type arithmetic_expr_type(arithmetic_expr_node *expr, type target_type,
 
   switch (expr->kind) {
   case EXPR_TERM:
-    return term_type(&expr->term, variables, functions);
+    return term_type(&expr->term, target_type, variables, functions);
 
   case EXPR_ADD:
   case EXPR_SUBTRACT:
@@ -694,8 +704,8 @@ static void expr_typecheck(expr_node *expr, ht *variables, ht *functions);
 static void rel_typecheck(rel_node *rel, ht *variables, ht *functions) {
   type lhs, rhs;
 
-  lhs = term_type(&rel->comparison.lhs, variables, functions);
-  rhs = term_type(&rel->comparison.rhs, variables, functions);
+  lhs = term_type(&rel->comparison.lhs, TYPE_INVALID, variables, functions);
+  rhs = term_type(&rel->comparison.rhs, lhs, variables, functions);
 
   if (lhs != rhs) {
     const char *lhs_type_str = type_to_str(lhs);
@@ -794,8 +804,8 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
 
     type index_type =
         arithmetic_expr_type(instr->assign_to_array_subscript.index_expr,
-                             TYPE_INT, variables, functions);
-    if (index_type != TYPE_INT) {
+                             TYPE_I32, variables, functions);
+    if (index_type != TYPE_I32) {
       scu_perror("Array index must be of type int, got %s [line %u]\n",
                  type_to_str(index_type), instr->line);
     }
@@ -829,7 +839,7 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
 
   case INSTR_MATCH: {
     type match_expr_type =
-        arithmetic_expr_type(instr->match.expr, TYPE_INT, variables, functions);
+        arithmetic_expr_type(instr->match.expr, TYPE_I32, variables, functions);
 
     for (u64 i = 0; i < instr->match.cases.count; i++) {
       match_case_node case_node;

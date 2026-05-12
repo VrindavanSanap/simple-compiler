@@ -1,7 +1,7 @@
 -include "io.scl"
 
-fn calculate(int a, int b, char op) : int {
-  int result
+fn calculate(i32 a, i32 b, char op) : i32 {
+  i32 result
   
   match op {
     '+' => result = a + b
@@ -32,7 +32,7 @@ fn calculate(int a, int b, char op) : int {
   return result
 }
 
-fn get_grade(int score) : char {
+fn get_grade(i32 score) : char {
   char grade
   
   match score {
@@ -50,8 +50,8 @@ fn get_grade(int score) : char {
   return grade
 }
 
-fn main() : int {
-  int choice
+fn main() : i32 {
+  i32 choice
   
   printf("=== Menu ===\n")
   printf("1. Calculator\n")
@@ -62,8 +62,8 @@ fn main() : int {
   
   match choice {
     1 => {
-      int a
-      int b
+      i32 a
+      i32 b
       char op
       
       printf("Enter first number: ")
@@ -73,13 +73,13 @@ fn main() : int {
       printf("Enter second number: ")
       scanf("%d", &b)
       
-      int result
+      i32 result
       result = calculate(a, b, op)
       printf("Result: %d\n", result)
     }
     
     2 => {
-      int score
+      i32 score
       
       printf("Enter score (0-100): ")
       scanf("%d", &score)

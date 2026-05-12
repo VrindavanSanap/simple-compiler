@@ -43,16 +43,36 @@ const char *token_kind_to_str(token_kind kind) {
   case TOKEN_RETURN:
     return "return";
 
-  case TOKEN_TYPE_INT:
-    return "type_int";
+  case TOKEN_TYPE_U8:
+    return "type_uint_8";
+  case TOKEN_TYPE_U16:
+    return "type_uint_16";
+  case TOKEN_TYPE_U32:
+    return "type_uint_32";
+  case TOKEN_TYPE_U64:
+    return "type_uint_64";
+  case TOKEN_TYPE_U128:
+    return "type_uint_128";
+
+  case TOKEN_TYPE_I8:
+    return "type_int_8";
+  case TOKEN_TYPE_I16:
+    return "type_int_16";
+  case TOKEN_TYPE_I32:
+    return "type_int_32";
+  case TOKEN_TYPE_I64:
+    return "type_int_64";
+  case TOKEN_TYPE_I128:
+    return "type_int_128";
+
   case TOKEN_TYPE_CHAR:
     return "type_char";
 
   case TOKEN_PDIR_INCLUDE:
     return "pdir_include";
 
-  case TOKEN_INT_LITERAL:
-    return "int";
+  case TOKEN_DECIMAL_LITERAL:
+    return "decimal";
   case TOKEN_CHAR_LITERAL:
     return "char";
   case TOKEN_STRING_LITERAL:
@@ -136,7 +156,7 @@ char *token_get_value(token token) {
   int len = 0;
 
   switch (token.kind) {
-  case TOKEN_INT_LITERAL:
+  case TOKEN_DECIMAL_LITERAL:
     len = snprintf(NULL, 0, "(%d)", token.value.integer) + 1;
     buf = malloc(len);
     snprintf(buf, len, "(%d)", token.value.integer);

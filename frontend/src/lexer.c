@@ -160,7 +160,7 @@ restart:
     u32 value = atoi(temp);
     free(temp);
 
-    return (token){.kind = TOKEN_INT_LITERAL,
+    return (token){.kind = TOKEN_DECIMAL_LITERAL,
                    .value.kind = TLV_INT,
                    .value.integer = value,
                    .line = l->line};
@@ -464,8 +464,19 @@ restart:
     return (token){.kind = tok_kind, .value.kind = TLV_NULL, .line = l->line}; \
   }
 
-    // Types
-    LEX_KEYWORD("int", TOKEN_TYPE_INT)
+    // Type specifiers
+    LEX_KEYWORD("u8", TOKEN_TYPE_U8)
+    LEX_KEYWORD("u16", TOKEN_TYPE_U16)
+    LEX_KEYWORD("u32", TOKEN_TYPE_U32)
+    LEX_KEYWORD("u64", TOKEN_TYPE_U64)
+    LEX_KEYWORD("u128", TOKEN_TYPE_U128)
+
+    LEX_KEYWORD("i8", TOKEN_TYPE_I8)
+    LEX_KEYWORD("i16", TOKEN_TYPE_I16)
+    LEX_KEYWORD("i32", TOKEN_TYPE_I32)
+    LEX_KEYWORD("i64", TOKEN_TYPE_I64)
+    LEX_KEYWORD("i128", TOKEN_TYPE_I128)
+
     LEX_KEYWORD("char", TOKEN_TYPE_CHAR)
 
     // Control flow

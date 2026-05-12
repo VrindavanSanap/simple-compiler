@@ -34,9 +34,20 @@ typedef enum token_kind {
   TOKEN_RETURN,
 
   /*
-   * Types
+   * Type specifiers
    */
-  TOKEN_TYPE_INT,
+  TOKEN_TYPE_U8,
+  TOKEN_TYPE_U16,
+  TOKEN_TYPE_U32,
+  TOKEN_TYPE_U64,
+  TOKEN_TYPE_U128,
+
+  TOKEN_TYPE_I8,
+  TOKEN_TYPE_I16,
+  TOKEN_TYPE_I32,
+  TOKEN_TYPE_I64,
+  TOKEN_TYPE_I128,
+
   TOKEN_TYPE_CHAR,
 
   /*
@@ -47,7 +58,7 @@ typedef enum token_kind {
   /*
    * Literals
    */
-  TOKEN_INT_LITERAL,
+  TOKEN_DECIMAL_LITERAL,
   TOKEN_CHAR_LITERAL,
   TOKEN_STRING_LITERAL,
 

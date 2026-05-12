@@ -1,7 +1,7 @@
 -include "io.scl"
 
-fn main() : int {
-  int n
+fn main() : i32 {
+  i32 n
 
   printf("Enter a number: ")
   scanf("%d", &n)
@@ -10,16 +10,16 @@ fn main() : int {
 
   n = n - 1
   
-  int count = 0
-  int num = 2
+  i32 count = 0
+  i32 num = 2
   
   printf("%d\n", num)
   
   while count != n {
-    int i = 2
-    int is_prime = 1
-    int sqrt = 0
-    int sqr = sqrt * sqrt
+    i32 i = 2
+    i32 is_prime = 1
+    i32 sqrt = 0
+    i32 sqr = sqrt * sqrt
   
     while sqr <= num {
       sqrt = sqrt + 1
@@ -27,8 +27,8 @@ fn main() : int {
     }
   
     while i <= sqrt {
-      int temp = num / i
-      int mul = temp * i
+      i32 temp = num / i
+      i32 mul = temp * i
       if mul == num {
         is_prime = 0
       }

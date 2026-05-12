@@ -1,10 +1,10 @@
 -include "io.scl"
 
-fn main() : int {
-  int arr[10] = {2, 6, 3, 7, 9, 4, 8, 5, 0, 1}
-  int target = 4
+fn main() : i32 {
+  i32 arr[10] = {2, 6, 3, 7, 9, 4, 8, 5, 0, 1}
+  i32 target = 4
 
-  int i = 0
+  i32 i = 0
   while i < 9 {
     if arr[i] == target {
       printf("target found at index %d\n", i)

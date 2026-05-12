@@ -26,17 +26,42 @@ extern "C" {
 
 static llvm::Type *scl_type_to_llvm(llvm_backend_ctx &ctx, type t) {
   switch (t) {
-  case TYPE_INT:
+  case TYPE_U8:
+  case TYPE_I8:
+    return llvm::Type::getInt8Ty(*ctx.context);
+  case TYPE_U16:
+  case TYPE_I16:
+    return llvm::Type::getInt16Ty(*ctx.context);
+  case TYPE_U32:
+  case TYPE_I32:
     return llvm::Type::getInt32Ty(*ctx.context);
+  case TYPE_U64:
+  case TYPE_I64:
+    return llvm::Type::getInt64Ty(*ctx.context);
+  case TYPE_U128:
+  case TYPE_I128:
+    return llvm::Type::getInt128Ty(*ctx.context);
+
   case TYPE_CHAR:
     return llvm::Type::getInt8Ty(*ctx.context);
+
   case TYPE_POINTER:
     return llvm::PointerType::get(*ctx.context, 0);
+
   case TYPE_STRING:
     return llvm::PointerType::get(*ctx.context, 0);
+
+  case TYPE_INVALID:
   case TYPE_VOID:
     return llvm::Type::getVoidTy(*ctx.context);
   }
+}
+
+static llvm::Value *cast_to_type(llvm_backend_ctx &ctx, llvm::Value *val,
+                                 llvm::Type *target_type) {
+  if (val->getType() == target_type)
+    return val;
+  return ctx.builder->CreateIntCast(val, target_type, true, "cast");
 }
 
 static std::map<std::string, llvm::AllocaInst *> named_values;
@@ -89,8 +114,18 @@ static llvm::Value *llvm_irgen_term(llvm_backend_ctx &ctx, term_node *term) {
     }
 
     llvm::AllocaInst *alloca = it->second;
-    return ctx.builder->CreateLoad(alloca->getAllocatedType(), alloca,
-                                   term->identifier.name);
+    llvm::Type *alloca_type = alloca->getAllocatedType();
+
+    if (alloca_type->isArrayTy()) {
+      return alloca;
+    }
+
+    llvm::Type *type = alloca->getAllocatedType();
+
+    if (type->isArrayTy())
+      return alloca;
+
+    return ctx.builder->CreateLoad(type, alloca, term->identifier.name);
   }
 
   case TERM_FUNCTION_CALL: {
@@ -157,30 +192,28 @@ static llvm::Value *llvm_irgen_term(llvm_backend_ctx &ctx, term_node *term) {
     }
 
     llvm::AllocaInst *array_alloca = it->second;
-    llvm::Type *alloca_type = array_alloca->getAllocatedType();
+    llvm::Type *array_type = array_alloca->getAllocatedType();
+
+    if (!array_type->isArrayTy()) {
+      scu_perror(const_cast<char *>("'%s' is not an array\n"),
+                 access->array_var.name);
+      return nullptr;
+    }
+
+    llvm::Type *elem_type = array_type->getArrayElementType();
 
     llvm::Value *index = llvm_irgen_arithmetic_expr(ctx, access->index_expr);
+
     if (!index)
       return nullptr;
 
-    if (index->getType()->getIntegerBitWidth() != 32) {
-      index = ctx.builder->CreateIntCast(
-          index, llvm::Type::getInt32Ty(*ctx.context), true, "idx_cast");
-    }
+    index = cast_to_type(ctx, index, llvm::Type::getInt32Ty(*ctx.context));
 
-    llvm::Value *elem_ptr = nullptr;
-    llvm::Type *elem_type = scl_type_to_llvm(ctx, access->array_var.type);
+    llvm::Value *indices[] = {
+        llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx.context), 0), index};
 
-    if (alloca_type->isArrayTy()) {
-      llvm::Value *indices[] = {
-          llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx.context), 0),
-          index};
-      elem_ptr = ctx.builder->CreateGEP(alloca_type, array_alloca, indices,
-                                        "arrayelem");
-    } else {
-      elem_ptr =
-          ctx.builder->CreateGEP(elem_type, array_alloca, index, "arrayelem");
-    }
+    llvm::Value *elem_ptr =
+        ctx.builder->CreateGEP(array_type, array_alloca, indices, "arrayelem");
 
     return ctx.builder->CreateLoad(elem_type, elem_ptr, "arrayval");
   }
@@ -322,7 +355,7 @@ static void llvm_irgen_instr_declare(llvm_backend_ctx &ctx, variable *var) {
   llvm::Type *var_type = scl_type_to_llvm(ctx, var->type);
 
   if (var->is_array && var->dimensions > 0) {
-    for (u32 i = var->dimensions - 1; i >= 0; i--) {
+    for (u32 i = var->dimensions; i-- > 0;) {
       var_type = llvm::ArrayType::get(var_type, var->dimension_sizes[i]);
     }
   }
@@ -348,7 +381,7 @@ static void llvm_irgen_instr_initialize(llvm_backend_ctx &ctx,
   llvm::Type *var_type = scl_type_to_llvm(ctx, var->type);
 
   if (var->is_array && var->dimensions > 0) {
-    for (u32 i = var->dimensions - 1; i >= 0; i--) {
+    for (u32 i = var->dimensions; i-- > 0;) {
       var_type = llvm::ArrayType::get(var_type, var->dimension_sizes[i]);
     }
   }
@@ -376,6 +409,8 @@ static void llvm_irgen_instr_initialize(llvm_backend_ctx &ctx,
                var->name, var->line);
     return;
   }
+
+  init_value = cast_to_type(ctx, init_value, var_type);
 
   ctx.builder->CreateStore(init_value, alloca);
 }
@@ -409,16 +444,20 @@ static void llvm_irgen_instr_declare_array(llvm_backend_ctx &ctx,
 
   llvm::AllocaInst *alloca = nullptr;
 
+  u64 array_size = 0;
+
   if (llvm::ConstantInt *const_size =
           llvm::dyn_cast<llvm::ConstantInt>(size_val)) {
-    u64 array_size = const_size->getZExtValue();
-    llvm::Type *array_type = llvm::ArrayType::get(elem_type, array_size);
-    alloca = create_entry_block_alloca(fn, var->name, array_type);
+    array_size = const_size->getZExtValue();
   } else {
-    llvm::IRBuilder<> tmp_builder(&fn->getEntryBlock(),
-                                  fn->getEntryBlock().begin());
-    alloca = tmp_builder.CreateAlloca(elem_type, size_val, var->name);
+    scu_perror(
+        const_cast<char *>("Non-constant array sizes not supported yet\n"));
+    return;
   }
+
+  llvm::Type *array_type = llvm::ArrayType::get(elem_type, array_size);
+
+  alloca = create_entry_block_alloca(fn, var->name, array_type);
 
   if (!alloca) {
     scu_perror(const_cast<char *>(
@@ -461,8 +500,23 @@ static void llvm_irgen_initialize_array(llvm_backend_ctx &ctx,
 
   llvm::IRBuilder<> tmp_builder(&fn->getEntryBlock(),
                                 fn->getEntryBlock().begin());
+
+  u64 array_size = 0;
+
+  if (llvm::ConstantInt *const_size =
+          llvm::dyn_cast<llvm::ConstantInt>(size_val)) {
+    array_size = const_size->getZExtValue();
+  } else {
+    scu_perror(
+        const_cast<char *>("Non-constant array sizes not supported yet\n"));
+    return;
+  }
+
+  llvm::Type *array_type = llvm::ArrayType::get(elem_type, array_size);
+
   llvm::AllocaInst *alloca =
-      tmp_builder.CreateAlloca(elem_type, size_val, var->name);
+      create_entry_block_alloca(fn, var->name, array_type);
+
   named_values[var->name] = alloca;
 
   for (u64 i = 0; i < arr->literal.elements.count; i++) {
@@ -473,6 +527,8 @@ static void llvm_irgen_initialize_array(llvm_backend_ctx &ctx,
 
     if (!elem_val)
       continue;
+
+    elem_val = cast_to_type(ctx, elem_val, elem_type);
 
     llvm::Value *elem_ptr = ctx.builder->CreateGEP(
         elem_type, alloca,
@@ -502,11 +558,15 @@ static void llvm_irgen_instr_assign(llvm_backend_ctx &ctx,
     return;
   }
 
+  llvm::Type *target_type = var_alloca->getAllocatedType();
+  expr_val = cast_to_type(ctx, expr_val, target_type);
+
   ctx.builder->CreateStore(expr_val, var_alloca);
 }
 
 static void llvm_irgen_instr_assign_to_array_subscript(
     llvm_backend_ctx &ctx, assign_to_array_subscript_node *assign) {
+
   variable *var = &assign->var;
 
   auto it = named_values.find(var->name);
@@ -516,41 +576,36 @@ static void llvm_irgen_instr_assign_to_array_subscript(
   }
 
   llvm::AllocaInst *array_alloca = it->second;
-  llvm::Type *alloca_type = array_alloca->getAllocatedType();
+  llvm::Type *array_type = array_alloca->getAllocatedType();
 
-  llvm::Value *index_val = llvm_irgen_arithmetic_expr(ctx, assign->index_expr);
-  if (!index_val) {
-    scu_perror(const_cast<char *>("Failed to evaluate index expression\n"));
+  if (!array_type->isArrayTy()) {
+    scu_perror(const_cast<char *>("'%s' is not an array\n"), var->name);
     return;
   }
 
-  if (index_val->getType()->getIntegerBitWidth() != 32) {
-    index_val = ctx.builder->CreateIntCast(
-        index_val, llvm::Type::getInt32Ty(*ctx.context), true, "idx_cast");
-  }
+  llvm::Type *elem_type = array_type->getArrayElementType();
 
-  llvm::Value *elem_ptr = nullptr;
-  llvm::Type *elem_type = scl_type_to_llvm(ctx, var->type);
+  llvm::Value *index = llvm_irgen_arithmetic_expr(ctx, assign->index_expr);
 
-  if (alloca_type->isArrayTy()) {
-    llvm::Value *indices[] = {
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx.context), 0),
-        index_val};
-    elem_ptr =
-        ctx.builder->CreateGEP(alloca_type, array_alloca, indices, "elem_ptr");
-  } else {
-    elem_ptr =
-        ctx.builder->CreateGEP(elem_type, array_alloca, index_val, "elem_ptr");
-  }
-
-  llvm::Value *rhs_val =
-      llvm_irgen_arithmetic_expr(ctx, assign->expr_to_assign);
-  if (!rhs_val) {
-    scu_perror(const_cast<char *>("Failed to evaluate RHS\n"));
+  if (!index)
     return;
-  }
 
-  ctx.builder->CreateStore(rhs_val, elem_ptr);
+  index = cast_to_type(ctx, index, llvm::Type::getInt32Ty(*ctx.context));
+
+  llvm::Value *indices[] = {
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx.context), 0), index};
+
+  llvm::Value *elem_ptr =
+      ctx.builder->CreateGEP(array_type, array_alloca, indices, "elem_ptr");
+
+  llvm::Value *rhs = llvm_irgen_arithmetic_expr(ctx, assign->expr_to_assign);
+
+  if (!rhs)
+    return;
+
+  rhs = cast_to_type(ctx, rhs, elem_type);
+
+  ctx.builder->CreateStore(rhs, elem_ptr);
 }
 
 static void llvm_irgen_instr_if(llvm_backend_ctx &ctx, if_node *if_stmt) {

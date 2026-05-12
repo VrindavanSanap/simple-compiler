@@ -11,6 +11,7 @@
 #include "core/ds/arena.h"
 #include "core/ds/dynamic_array.h"
 #include "core/ds/ht.h"
+#include "frontend/var.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -28,14 +29,26 @@ void ast_init(ast *a) {
  */
 static void check_var_and_print(variable *var) {
   switch (var->type) {
-  case TYPE_INT:
+  case TYPE_U8:
+  case TYPE_U16:
+  case TYPE_U32:
+  case TYPE_U64:
+  case TYPE_U128:
+  case TYPE_I8:
+  case TYPE_I16:
+  case TYPE_I32:
+  case TYPE_I64:
+  case TYPE_I128:
   case TYPE_CHAR:
   case TYPE_STRING:
-    printf("%s", var->name);
+    printf("%s %s", type_to_str(var->type), var->name);
     break;
+
   case TYPE_POINTER:
     printf("*%s", var->name);
     break;
+
+  case TYPE_INVALID:
   case TYPE_VOID:
     break;
   }
@@ -272,7 +285,16 @@ void print_instr(instr_node *instr) {
     check_var_and_print(&instr->initialize_variable.var);
     printf(" = ");
     switch (instr->initialize_variable.var.type) {
-    case TYPE_INT:
+    case TYPE_U8:
+    case TYPE_U16:
+    case TYPE_U32:
+    case TYPE_U64:
+    case TYPE_U128:
+    case TYPE_I8:
+    case TYPE_I16:
+    case TYPE_I32:
+    case TYPE_I64:
+    case TYPE_I128:
     case TYPE_POINTER:
       check_arithmetic_expr_and_print(instr->initialize_variable.expr);
       printf("\n");
@@ -485,20 +507,7 @@ void print_instr(instr_node *instr) {
       for (u64 i = 0; i < instr->fn_declare_node.returntypes.count; i++) {
         type ret_type;
         dynamic_array_get(&instr->fn_declare_node.returntypes, i, &ret_type);
-        switch (ret_type) {
-        case TYPE_INT:
-          printf("int");
-          break;
-        case TYPE_CHAR:
-          printf("char");
-          break;
-        case TYPE_POINTER:
-          printf("pointer");
-          break;
-        default:
-          printf("unknown");
-          break;
-        }
+        printf("%s", type_to_str(ret_type));
         if (i < instr->fn_declare_node.returntypes.count - 1) {
           printf(", ");
         }
@@ -535,20 +544,7 @@ void print_instr(instr_node *instr) {
       for (u64 i = 0; i < instr->fn_define_node.returntypes.count; i++) {
         type ret_type;
         dynamic_array_get(&instr->fn_define_node.returntypes, i, &ret_type);
-        switch (ret_type) {
-        case TYPE_INT:
-          printf("int");
-          break;
-        case TYPE_CHAR:
-          printf("char");
-          break;
-        case TYPE_POINTER:
-          printf("pointer");
-          break;
-        default:
-          printf("unknown");
-          break;
-        }
+        printf("%s", type_to_str(ret_type));
         if (i < instr->fn_define_node.returntypes.count - 1) {
           printf(", ");
         }

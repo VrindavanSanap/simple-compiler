@@ -1,12 +1,12 @@
 -include "io.scl"
 
-fn main() : int {
-  int number
+fn main() : i32 {
+  i32 number
 
   printf("Enter a number: ")
   scanf("%d", &number)
   
-  int count = 0
+  i32 count = 0
   
   loop {
     if number == 0 break
