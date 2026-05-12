@@ -733,6 +733,13 @@ static void free_instr(instr_node *instr) {
   case INSTR_IF:
     free_expr_node(&instr->if_.condition);
     free_cond_block_node(&instr->if_.then);
+
+    for (u64 i = 0; i < instr->if_.else_ifs.count; i++) {
+      if_node *node = dynamic_array_get_ptr(&instr->if_.else_ifs, i);
+      free_cond_block_node(&node->then);
+    }
+    dynamic_array_free(&instr->if_.else_ifs);
+
     free_cond_block_node(instr->if_.else_);
     break;
 
