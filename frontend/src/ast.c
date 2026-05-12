@@ -796,6 +796,10 @@ static void free_instr(instr_node *instr) {
   case INSTR_FN_DEFINE:
     ht_destroy(instr->fn_define_node.defined.variables);
     free_instrs(&instr->fn_define_node.defined.instrs);
+    dynamic_array_free(&instr->fn_define_node.returntypes);
+    dynamic_array_free(&instr->fn_define_node.parameters);
+    break;
+
   case INSTR_FN_DECLARE:
     dynamic_array_free(&instr->fn_declare_node.returntypes);
     dynamic_array_free(&instr->fn_declare_node.parameters);
