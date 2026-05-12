@@ -90,9 +90,9 @@ static void check_term_and_print(term_node *term) {
   case TERM_FUNCTION_CALL:
     printf("%s(", term->fn_call.name);
     for (u64 i = 0; i < term->fn_call.parameters.count; i++) {
-      arithmetic_expr_node arg;
-      dynamic_array_get(&term->fn_call.parameters, i, &arg);
-      check_arithmetic_expr_and_print(&arg);
+      arithmetic_expr_node *arg =
+          dynamic_array_get_ptr(&term->fn_call.parameters, i);
+      check_arithmetic_expr_and_print(arg);
       if (i < term->fn_call.parameters.count - 1) {
         printf(", ");
       }
@@ -242,9 +242,8 @@ static void print_cond_block(cond_block_node *block) {
     print_instr(block->single);
   } else {
     for (u64 i = 0; i < block->multi.count; i++) {
-      instr_node instr;
-      dynamic_array_get(&block->multi, i, &instr);
-      print_instr(&instr);
+      instr_node *instr = dynamic_array_get_ptr(&block->multi, i);
+      print_instr(instr);
     }
   }
 
@@ -288,6 +287,7 @@ void print_instr(instr_node *instr) {
         break;
       }
       break;
+
     default:
       break;
     }
@@ -328,9 +328,9 @@ void print_instr(instr_node *instr) {
     check_arithmetic_expr_and_print(instr->initialize_array.size_expr);
     printf("] = {");
     for (u64 i = 0; i < instr->initialize_array.literal.elements.count; i++) {
-      arithmetic_expr_node elem;
-      dynamic_array_get(&instr->initialize_array.literal.elements, i, &elem);
-      check_arithmetic_expr_and_print(&elem);
+      arithmetic_expr_node *elem =
+          dynamic_array_get_ptr(&instr->initialize_array.literal.elements, i);
+      check_arithmetic_expr_and_print(elem);
       if (i < instr->initialize_array.literal.elements.count - 1) {
         printf(", ");
       }
@@ -363,20 +363,19 @@ void print_instr(instr_node *instr) {
     icount++;
 
     for (u64 i = 0; i < match->cases.count; i++) {
-      match_case_node case_node;
-      dynamic_array_get(&match->cases, i, &case_node);
+      match_case_node *case_node = dynamic_array_get_ptr(&match->cases, i);
 
       PRINT_INDENTATION
 
       printf("case ");
 
-      switch (case_node.kind) {
+      switch (case_node->kind) {
       case MATCH_CASE_VALUES: {
-        for (u64 j = 0; j < case_node.values.values.count; j++) {
+        for (u64 j = 0; j < case_node->values.values.count; j++) {
           arithmetic_expr_node *val;
-          dynamic_array_get(&case_node.values.values, j, &val);
+          dynamic_array_get(&case_node->values.values, j, &val);
           check_arithmetic_expr_and_print(val);
-          if (j < case_node.values.values.count - 1)
+          if (j < case_node->values.values.count - 1)
             printf(", ");
         }
         printf(":\n");
@@ -384,9 +383,9 @@ void print_instr(instr_node *instr) {
       }
 
       case MATCH_CASE_RANGE: {
-        check_arithmetic_expr_and_print(case_node.range.start);
+        check_arithmetic_expr_and_print(case_node->range.start);
         printf("...");
-        check_arithmetic_expr_and_print(case_node.range.end);
+        check_arithmetic_expr_and_print(case_node->range.end);
         printf(":\n");
         break;
       }
@@ -397,7 +396,7 @@ void print_instr(instr_node *instr) {
       }
       }
 
-      print_cond_block(&case_node.body);
+      print_cond_block(&case_node->body);
     }
 
     icount--;
@@ -426,11 +425,13 @@ void print_instr(instr_node *instr) {
     case LOOP_WHILE:
       printf("while loop starts, break condition: ");
       check_expr_node_and_print(&instr->loop.conditional.break_condition);
+      printf("\n");
       break;
 
     case LOOP_DO_WHILE:
       printf("do-while-loop starts, break condition: ");
       check_expr_node_and_print(&instr->loop.conditional.break_condition);
+      printf("\n");
       break;
 
     case LOOP_FOR:
@@ -445,9 +446,8 @@ void print_instr(instr_node *instr) {
     icount++;
 
     for (u64 i = 0; i < instr->loop.instrs.count; i++) {
-      instr_node _instr;
-      dynamic_array_get(&instr->loop.instrs, i, &_instr);
-      print_instr(&_instr);
+      instr_node *_instr = dynamic_array_get_ptr(&instr->loop.instrs, i);
+      print_instr(_instr);
     }
 
     icount--;
@@ -468,9 +468,9 @@ void print_instr(instr_node *instr) {
            instr->fn_declare_node.name);
 
     for (u64 i = 0; i < instr->fn_declare_node.parameters.count; i++) {
-      variable param;
-      dynamic_array_get(&instr->fn_declare_node.parameters, i, &param);
-      check_var_and_print(&param);
+      variable *param =
+          dynamic_array_get_ptr(&instr->fn_declare_node.parameters, i);
+      check_var_and_print(param);
       if (i < instr->fn_declare_node.parameters.count - 1) {
         printf(", ");
       }
@@ -508,10 +508,9 @@ void print_instr(instr_node *instr) {
 
     if (instr->fn_declare_node.kind == FN_DEFINED) {
       for (u64 i = 0; i < instr->fn_declare_node.defined.instrs.count; i++) {
-        instr_node body_instr;
-        dynamic_array_get(&instr->fn_declare_node.defined.instrs, i,
-                          &body_instr);
-        print_instr(&body_instr);
+        instr_node *body_instr =
+            dynamic_array_get_ptr(&instr->fn_declare_node.defined.instrs, i);
+        print_instr(body_instr);
       }
     }
     break;
@@ -560,9 +559,9 @@ void print_instr(instr_node *instr) {
     icount++;
 
     for (u64 i = 0; i < instr->fn_define_node.defined.instrs.count; i++) {
-      instr_node body_instr;
-      dynamic_array_get(&instr->fn_define_node.defined.instrs, i, &body_instr);
-      print_instr(&body_instr);
+      instr_node *body_instr =
+          dynamic_array_get_ptr(&instr->fn_define_node.defined.instrs, i);
+      print_instr(body_instr);
     }
 
     icount--;
@@ -574,9 +573,9 @@ void print_instr(instr_node *instr) {
       printf("void\n");
     } else {
       for (u64 i = 0; i < instr->ret_node.returnvals.count; i++) {
-        arithmetic_expr_node ret_expr;
-        dynamic_array_get(&instr->ret_node.returnvals, i, &ret_expr);
-        check_arithmetic_expr_and_print(&ret_expr);
+        arithmetic_expr_node *ret_expr =
+            dynamic_array_get_ptr(&instr->ret_node.returnvals, i);
+        check_arithmetic_expr_and_print(ret_expr);
         if (i < instr->ret_node.returnvals.count - 1) {
           printf(", ");
         }
@@ -588,9 +587,9 @@ void print_instr(instr_node *instr) {
   case INSTR_FN_CALL:
     printf("function call: %s(", instr->fn_call.name);
     for (u64 i = 0; i < instr->fn_call.parameters.count; i++) {
-      arithmetic_expr_node arg;
-      dynamic_array_get(&instr->fn_call.parameters, i, &arg);
-      check_arithmetic_expr_and_print(&arg);
+      arithmetic_expr_node *arg =
+          dynamic_array_get_ptr(&instr->fn_call.parameters, i);
+      check_arithmetic_expr_and_print(arg);
       if (i < instr->fn_call.parameters.count - 1) {
         printf(", ");
       }
@@ -602,9 +601,8 @@ void print_instr(instr_node *instr) {
 
 void print_ast(ast *program_ast) {
   for (u64 i = 0; i < program_ast->instrs.count; i++) {
-    instr_node instr;
-    dynamic_array_get(&program_ast->instrs, i, &instr);
-    print_instr(&instr);
+    instr_node *instr = dynamic_array_get_ptr(&program_ast->instrs, i);
+    print_instr(instr);
   }
 }
 
@@ -657,9 +655,8 @@ static void free_arithmetic_expr_node(arithmetic_expr_node *expr) {
 
 static void free_arithmetic_exprs(dynamic_array *exprs) {
   for (u64 i = 0; i < exprs->count; i++) {
-    arithmetic_expr_node expr;
-    dynamic_array_get(exprs, i, &expr);
-    free_arithmetic_expr_node(&expr);
+    arithmetic_expr_node *expr = dynamic_array_get_ptr(exprs, i);
+    free_arithmetic_expr_node(expr);
   }
   dynamic_array_free(exprs);
 }
@@ -743,29 +740,29 @@ static void free_instr(instr_node *instr) {
     free_arithmetic_expr_node(instr->match.expr);
 
     for (u64 i = 0; i < instr->match.cases.count; i++) {
-      match_case_node case_node;
-      dynamic_array_get(&instr->match.cases, i, &case_node);
+      match_case_node *case_node =
+          dynamic_array_get_ptr(&instr->match.cases, i);
 
-      switch (case_node.kind) {
+      switch (case_node->kind) {
       case MATCH_CASE_VALUES:
-        for (u64 j = 0; j < case_node.values.values.count; j++) {
+        for (u64 j = 0; j < case_node->values.values.count; j++) {
           arithmetic_expr_node *expr;
-          dynamic_array_get(&case_node.values.values, j, &expr);
+          dynamic_array_get(&case_node->values.values, j, &expr);
           free_arithmetic_expr_node(expr);
         }
-        dynamic_array_free(&case_node.values.values);
+        dynamic_array_free(&case_node->values.values);
         break;
 
       case MATCH_CASE_RANGE:
-        free_arithmetic_expr_node(case_node.range.start);
-        free_arithmetic_expr_node(case_node.range.end);
+        free_arithmetic_expr_node(case_node->range.start);
+        free_arithmetic_expr_node(case_node->range.end);
         break;
 
       case MATCH_CASE_DEFAULT:
         break;
       }
 
-      free_cond_block_node(&case_node.body);
+      free_cond_block_node(&case_node->body);
     }
 
     dynamic_array_free(&instr->match.cases);
@@ -816,9 +813,8 @@ static void free_instr(instr_node *instr) {
 
 static void free_instrs(dynamic_array *instrs) {
   for (u64 i = 0; i < instrs->count; i++) {
-    instr_node instr;
-    dynamic_array_get(instrs, i, &instr);
-    free_instr(&instr);
+    instr_node *instr = dynamic_array_get_ptr(instrs, i);
+    free_instr(instr);
   }
   dynamic_array_free(instrs);
 }
