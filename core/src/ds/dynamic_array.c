@@ -19,6 +19,15 @@ void dynamic_array_init(dynamic_array *da, u64 size) {
   da->capacity = 0;
 }
 
+void *dynamic_array_get_ptr(dynamic_array *da, u64 index) {
+  if (!da || !da->items || index >= da->count) {
+    scu_perror("Invalid Dynamic array passed to function.\n");
+    return NULL;
+  }
+
+  return (char *)da->items + (index * da->item_size);
+}
+
 u32 dynamic_array_get(dynamic_array *da, u64 index, void *item) {
   if (!da || !item || index >= da->count || !da->items) {
     scu_perror("Invalid Dynamic array passed to function.\n");

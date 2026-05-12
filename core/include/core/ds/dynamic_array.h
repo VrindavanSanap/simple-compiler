@@ -27,6 +27,16 @@ typedef struct dynamic_array {
 void dynamic_array_init(dynamic_array *da, u64 size);
 
 /*
+ * @brief: Gets  pointer to the item at the specified index.
+ *
+ * @param da: pointer to a dynamic_array
+ * @param index: index of the item to get
+ *
+ * @return: pointer to item at specified index
+ */
+void *dynamic_array_get_ptr(dynamic_array *da, u64 index);
+
+/*
  * @brief: Gets an item at the specified index.
  *
  * @param da: pointer to a dynamic_array
