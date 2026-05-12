@@ -61,11 +61,13 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 ### Syntax
 
-- [ ] NEC Write a EBNF Grammar specification for scull
+- [ ] NEC Write a EBNF Grammar specification or similar for scull
 
 ### Type System
 
-- [ ] NEC Unsigned ints (`u32`), signed ints (`i32`), floats (`f32`), etc.
+- [x] NEC Unsigned ints (`u32`), signed ints (`i32`)
+- [ ] NEC floats (`f32`)
+- [ ] NEC int and float literals (decimal, hex, bin, octal, etc)
 - [ ] NEC Boolean type (`bool`)
 - [ ] NEC Typedefs
 - [ ] NEC Better way to declare variables: `let x: u32 = 3`
@@ -92,9 +94,14 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 - [ ] NEC Bitwise operators (`&`, `|`, `^`, `~`, `<<`, `>>`)
 - [ ] NEC Assignment operators (`+=`, `-=`, `*=`, `/=`, etc.)
 
-### Basic Features
+### More Advanced Features
 
-- [ ] NEC Alternative for `sizeof()`
+- [ ] NEC Alternative for `sizeof()` and `typeof()`
+
+- [ ] ? Memory management
+  - explicit allocators
+  - defer
+  - RAII for allocators
 
 ---
 
@@ -132,6 +139,12 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 ## Phase 5: Experimental Features
 
 ### Advanced Type System
+
+- [ ] NEC Owned types
+
+```scl
+  int own *T;
+```
 
 - [ ] EXP Nullable types
 
