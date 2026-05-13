@@ -7,7 +7,7 @@ Yet another systems programming language.
 ```
 -include "io.scl"
 
-fn main() : int {
+fn main() : i32 {
   printf("Hello, World!\n")
   return 0
 }
