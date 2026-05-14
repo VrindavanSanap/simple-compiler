@@ -1221,10 +1221,5 @@ void llvm_irgen_instr(llvm_backend_ctx &ctx, instr_node *instr) {
   case INSTR_FN_CALL:
     llvm_irgen_instr_fn_call(ctx, &instr->fn_call);
     break;
-
-  default:
-    scu_perror(const_cast<char *>("Unexpected instr type: %s"));
-    print_instr(instr);
-    break;
   }
 }
