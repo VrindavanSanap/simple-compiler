@@ -93,7 +93,7 @@ static void parse_term_for_expr(parser *p, term_node *term) {
   parser_current(p, &token);
   term->line = token.line;
 
-  if (token.kind == TOKEN_DECIMAL_LITERAL) {
+  if (token.kind == TOKEN_INT_LITERAL) {
     term->kind = TERM_INT;
     term->value.integer = token.value.integer;
     parser_advance(p);
@@ -203,7 +203,7 @@ static arithmetic_expr_node *parse_factor(parser *p) {
     return node;
   }
 
-  if (token.kind == TOKEN_DECIMAL_LITERAL || token.kind == TOKEN_CHAR_LITERAL ||
+  if (token.kind == TOKEN_INT_LITERAL || token.kind == TOKEN_CHAR_LITERAL ||
       token.kind == TOKEN_IDENTIFIER || token.kind == TOKEN_POINTER ||
       token.kind == TOKEN_STRING_LITERAL || token.kind == TOKEN_ADDRESS_OF) {
     arithmetic_expr_node *node =
@@ -211,7 +211,7 @@ static arithmetic_expr_node *parse_factor(parser *p) {
     node->kind = EXPR_TERM;
     node->line = token.line;
 
-    if (token.kind == TOKEN_DECIMAL_LITERAL) {
+    if (token.kind == TOKEN_INT_LITERAL) {
       node->term.kind = TERM_INT;
       node->term.value.integer = token.value.integer;
       parser_advance(p);

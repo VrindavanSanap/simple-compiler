@@ -58,7 +58,7 @@ typedef enum token_kind {
   /*
    * Literals
    */
-  TOKEN_DECIMAL_LITERAL,
+  TOKEN_INT_LITERAL,
   TOKEN_CHAR_LITERAL,
   TOKEN_STRING_LITERAL,
 

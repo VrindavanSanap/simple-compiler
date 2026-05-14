@@ -71,8 +71,8 @@ const char *token_kind_to_str(token_kind kind) {
   case TOKEN_PDIR_INCLUDE:
     return "pdir_include";
 
-  case TOKEN_DECIMAL_LITERAL:
-    return "decimal";
+  case TOKEN_INT_LITERAL:
+    return "integer";
   case TOKEN_CHAR_LITERAL:
     return "char";
   case TOKEN_STRING_LITERAL:
@@ -156,7 +156,7 @@ char *token_get_value(token token) {
   int len = 0;
 
   switch (token.kind) {
-  case TOKEN_DECIMAL_LITERAL:
+  case TOKEN_INT_LITERAL:
     len = snprintf(NULL, 0, "(%d)", token.value.integer) + 1;
     buf = malloc(len);
     snprintf(buf, len, "(%d)", token.value.integer);

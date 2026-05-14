@@ -149,18 +149,39 @@ restart:
   }
 
   else if (isdigit(l->ch)) {
+    int base = 10;
+
+    if (l->ch == '0') {
+      lexer_read_char(l);
+      if (l->ch == 'x' || l->ch == 'X') {
+        base = 16;
+        lexer_read_char(l);
+      } else if (l->ch == 'b' || l->ch == 'B') {
+        base = 2;
+        lexer_read_char(l);
+      } else if (isdigit(l->ch)) {
+        base = 8;
+      } else {
+        return (token){.kind = TOKEN_INT_LITERAL,
+                       .value.kind = TLV_INT,
+                       .value.integer = 0,
+                       .line = l->line};
+      }
+    }
+
     string_slice slice = {.str = l->buffer + l->pos, .len = 0};
-    while (isdigit(l->ch)) {
+    while (isxdigit(l->ch)) {
       slice.len += 1;
       lexer_read_char(l);
     }
+
     char *temp = NULL;
     string_slice_to_owned(&slice, &temp);
 
-    u32 value = atoi(temp);
+    u32 value = strtoul(temp, NULL, base);
     free(temp);
 
-    return (token){.kind = TOKEN_DECIMAL_LITERAL,
+    return (token){.kind = TOKEN_INT_LITERAL,
                    .value.kind = TLV_INT,
                    .value.integer = value,
                    .line = l->line};
