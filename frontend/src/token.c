@@ -221,8 +221,10 @@ void token_print_tokens(dynamic_array *tokens) {
     printf("%s", kind);
 
     char *value = token_get_value(token);
-    printf("%s", value);
-    free(value);
+    if (value) {
+      printf(" %s", value);
+      free(value);
+    }
 
     printf("\n");
   }
