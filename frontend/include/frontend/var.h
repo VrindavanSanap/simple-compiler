@@ -1,5 +1,5 @@
 /*
- * var: variable, symbol and types for the SCULL Langauge
+ * var: variable struct definition for the SCULL Langauge
  *
  * Scull Project Copyright (C) 2026, Samyak Bambole <bambole@duck.com>
  * Licensed under the GNU/GPL Version 3
@@ -10,33 +10,8 @@
 
 #include "core/common.h"
 #include "core/ds/ht.h"
-#include "frontend/token.h"
 
-/*
- * @enum type: represents data types.
- */
-typedef enum type {
-  TYPE_INVALID = 0,
-
-  TYPE_U8,
-  TYPE_U16,
-  TYPE_U32,
-  TYPE_U64,
-  TYPE_U128,
-
-  TYPE_I8,
-  TYPE_I16,
-  TYPE_I32,
-  TYPE_I64,
-  TYPE_I128,
-
-  TYPE_CHAR,
-
-  TYPE_STRING,
-
-  TYPE_POINTER,
-  TYPE_VOID
-} type;
+#include "frontend/types.h"
 
 /*
  * @struct variable: represents a variable.
@@ -51,15 +26,6 @@ typedef struct variable {
   u64 dimensions;
   u64 *dimension_sizes;
 } variable;
-
-/*
- * @brief: get the size of a data type in bytes.
- *
- * @param t: data type.
- *
- * @return: size in bytes of the type t.
- */
-u32 type_size(type t);
 
 /*
  * @brief: check if a certain variable exists in a dynamic_array of variables.
@@ -82,20 +48,5 @@ u64 get_var_stack_offset(ht *variables, variable *var_to_find);
  * @return: data type of the variable (enumeration)
  */
 type get_var_type(ht *variables, variable *var_to_find);
-
-/*
- * @brief: convert a type enumeration to its string representation.
- */
-const char *type_to_str(type type);
-
-/*
- * @brief: deduce data type from type specifier token
- *
- * @param specifier: type specifier token kind (others skipped automatically,
- * returns TYPE_INVALID)
- *
- * @return mapped data type from the specifier token kind
- */
-type type_from_specifier_token(token_kind specifier);
 
 #endif // !VAR_H
