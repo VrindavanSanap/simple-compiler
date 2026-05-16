@@ -39,9 +39,11 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
   - reduce pre-defined parsables into instructions, rather than the existing
   - will follow a similar top-down approach but would be better to add features to and read
 
-- [ ] ? Look into pratt parsing
+- [ ] NEC pratt parsing for expressions
 
-### Alternative Backends
+- [ ] NEC Write a EBNF Grammar specification or similar for scull
+
+### Backend
 
 - [ ] NEC Develop C Backend
   - Language changes for 1:1 C translation needed
@@ -59,22 +61,31 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 ## Phase 3: Core Language Features
 
-### Syntax
-
-- [ ] NEC Write a EBNF Grammar specification or similar for scull
-
-### Type System
+### Type System, Variables, etc
 
 - [x] NEC Unsigned ints (`u32`), signed ints (`i32`)
-- [ ] NEC floats (`f32`)
-- [ ] NEC int and float literals (decimal, hex, bin, octal, etc)
-- [ ] NEC Boolean type (`bool`)
+- [x] NEC int literals
+
+- [ ] NEC floats (f16, f32, f64, f80, f128)
+- [ ] NEC float literals
+
+- [x] NEC Boolean type (`bool`)
+
 - [ ] NEC Typedefs
-- [ ] NEC Better way to declare variables: `let x: u32 = 3`
 - [ ] NEC Better strings
 - [ ] NEC Multi-dimensional arrays
 - [ ] ? Type casting
 - [ ] ? Type inference
+
+- [ ] NEC Better way to declare variables
+
+```
+let modifiers name : type = literal -- rust style
+
+modifiers name : type = literal -- zig style
+
+modifiers type name = literal -- c style
+```
 
 ### Control Flow
 
@@ -86,7 +97,7 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 - [ ] NEC Ternary operator-like functionality using if-elseif-else in assignment
 
-- [ ] NEX Seperate scopes for multi-instr conditional blocks (if-else, match, ...)
+- [ ] NEC Seperate scopes for multi-instr conditional blocks (if-else, match, ...)
 
 ### Operators
 
