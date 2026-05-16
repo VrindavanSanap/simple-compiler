@@ -48,6 +48,8 @@ typedef enum token_kind {
   TOKEN_TYPE_I64,
   TOKEN_TYPE_I128,
 
+  TOKEN_TYPE_BOOL,
+
   TOKEN_TYPE_CHAR,
 
   /*
@@ -59,6 +61,7 @@ typedef enum token_kind {
    * Literals
    */
   TOKEN_INT_LITERAL,
+  TOKEN_BOOL_LITERAL,
   TOKEN_CHAR_LITERAL,
   TOKEN_STRING_LITERAL,
 
@@ -128,6 +131,7 @@ typedef enum token_literal_value_kind {
 
   TLV_INT,
   TLV_CHAR,
+  TLV_BOOL,
   TLV_STR,
 } token_literal_value_kind;
 
@@ -141,6 +145,7 @@ typedef struct token_literal_value {
   union {
     u32 integer;
     char character;
+    bool boolean;
     char *str;
   };
 } token_literal_value;

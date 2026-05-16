@@ -78,7 +78,7 @@ typedef struct term_node {
  * the parser.
  */
 typedef enum arithmetic_expr_kind {
-  EXPR_TERM = 0,
+  EXPR_AR_TERM = 0,
 
   EXPR_ADD,
   EXPR_SUBTRACT,
@@ -173,8 +173,10 @@ typedef struct logical_node {
  * parser.
  */
 typedef enum expr_kind {
+  EXPR_TERM = 0,
   EXPR_LOGICAL,
   EXPR_RELATIONAL,
+  EXPR_BOOL,
 } expr_kind;
 
 /*
@@ -184,8 +186,10 @@ typedef enum expr_kind {
 typedef struct expr_node {
   expr_kind kind;
   union {
+    term_node term;
     logical_node logical;
     rel_node relational;
+    bool boolean;
   };
 } expr_node;
 
@@ -222,7 +226,11 @@ typedef struct instr_node instr_node;
 
 typedef struct initialize_variable_node {
   variable var;
-  arithmetic_expr_node *expr;
+
+  union {
+    expr_node boolean;
+    arithmetic_expr_node *arithmetic;
+  };
 } initialize_variable_node;
 
 typedef struct declare_array_node {

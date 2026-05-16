@@ -42,6 +42,9 @@ static llvm::Type *scl_type_to_llvm(llvm_backend_ctx &ctx, type t) {
   case TYPE_I128:
     return llvm::Type::getInt128Ty(*ctx.context);
 
+  case TYPE_BOOL:
+    return llvm::Type::getInt1Ty(*ctx.context);
+
   case TYPE_CHAR:
     return llvm::Type::getInt8Ty(*ctx.context);
 
@@ -236,7 +239,7 @@ static llvm::Value *llvm_irgen_term(llvm_backend_ctx &ctx, term_node *term) {
 static llvm::Value *llvm_irgen_arithmetic_expr(llvm_backend_ctx &ctx,
                                                arithmetic_expr_node *expr) {
   switch (expr->kind) {
-  case EXPR_TERM:
+  case EXPR_AR_TERM:
     return llvm_irgen_term(ctx, &expr->term);
 
   case EXPR_ADD: {
@@ -344,10 +347,15 @@ static llvm::Value *llvm_irgen_logical(llvm_backend_ctx &ctx,
 
 static llvm::Value *llvm_irgen_expr(llvm_backend_ctx &ctx, expr_node *expr) {
   switch (expr->kind) {
+  case EXPR_TERM:
+    return llvm_irgen_term(ctx, &expr->term);
   case EXPR_LOGICAL:
     return llvm_irgen_logical(ctx, &expr->logical);
   case EXPR_RELATIONAL:
     return llvm_irgen_relational(ctx, &expr->relational);
+  case EXPR_BOOL:
+    return llvm::ConstantInt::get(llvm::Type::getInt1Ty(*ctx.context),
+                                  expr->boolean ? 1 : 0);
   }
 }
 
@@ -401,7 +409,13 @@ static void llvm_irgen_instr_initialize(llvm_backend_ctx &ctx,
 
   named_values[var->name] = alloca;
 
-  llvm::Value *init_value = llvm_irgen_arithmetic_expr(ctx, init_var->expr);
+  llvm::Value *init_value;
+
+  if (var->type == TYPE_BOOL) {
+    init_value = llvm_irgen_expr(ctx, &init_var->boolean);
+  } else {
+    init_value = llvm_irgen_arithmetic_expr(ctx, init_var->arithmetic);
+  }
 
   if (!init_value) {
     scu_perror(const_cast<char *>("Failed to generate intiialization "

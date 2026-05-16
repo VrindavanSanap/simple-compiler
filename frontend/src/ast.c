@@ -11,6 +11,7 @@
 #include "core/ds/arena.h"
 #include "core/ds/dynamic_array.h"
 #include "core/ds/ht.h"
+#include "frontend/types.h"
 #include "frontend/var.h"
 
 #include <inttypes.h>
@@ -39,6 +40,7 @@ static void check_var_and_print(variable *var) {
   case TYPE_I32:
   case TYPE_I64:
   case TYPE_I128:
+  case TYPE_BOOL:
   case TYPE_CHAR:
   case TYPE_STRING:
     printf("%s %s", type_to_str(var->type), var->name);
@@ -122,7 +124,7 @@ static void check_term_and_print(term_node *term) {
  */
 static void check_arithmetic_expr_and_print(arithmetic_expr_node *expr) {
   switch (expr->kind) {
-  case EXPR_TERM:
+  case EXPR_AR_TERM:
     check_term_and_print(&expr->term);
     break;
 
@@ -227,12 +229,20 @@ static void check_logical_node_and_print(logical_node *log) {
 
 static void check_expr_node_and_print(expr_node *expr) {
   switch (expr->kind) {
+  case EXPR_TERM:
+    check_term_and_print(&expr->term);
+    break;
   case EXPR_LOGICAL:
     check_logical_node_and_print(&expr->logical);
     break;
   case EXPR_RELATIONAL:
     check_rel_node_and_print(&expr->relational);
     break;
+  case EXPR_BOOL:
+    if (expr->boolean)
+      printf("true\n");
+    else
+      printf("false\n");
   }
 }
 
@@ -296,14 +306,19 @@ void print_instr(instr_node *instr) {
     case TYPE_I64:
     case TYPE_I128:
     case TYPE_POINTER:
-      check_arithmetic_expr_and_print(instr->initialize_variable.expr);
+      check_arithmetic_expr_and_print(instr->initialize_variable.arithmetic);
       printf("\n");
       break;
+
+    case TYPE_BOOL:
+      check_expr_node_and_print(&instr->initialize_variable.boolean);
+      break;
+
     case TYPE_CHAR:
-      switch (instr->initialize_variable.expr->kind) {
-      case EXPR_TERM:
+      switch (instr->initialize_variable.arithmetic->kind) {
+      case EXPR_AR_TERM:
         printf("\'%c\'\n",
-               instr->initialize_variable.expr->term.value.character);
+               instr->initialize_variable.arithmetic->term.value.character);
         break;
       default:
         break;
@@ -630,7 +645,7 @@ static void free_term_node(term_node *term) {
 
 static void free_arithmetic_expr_node(arithmetic_expr_node *expr) {
   switch (expr->kind) {
-  case EXPR_TERM:
+  case EXPR_AR_TERM:
     free_term_node(&expr->term);
     break;
 
@@ -679,11 +694,16 @@ static void free_logical_node(logical_node *log) {
 
 static void free_expr_node(expr_node *expr) {
   switch (expr->kind) {
+  case EXPR_TERM:
+    free_term_node(&expr->term);
+    break;
   case EXPR_LOGICAL:
     free_logical_node(&expr->logical);
     break;
   case EXPR_RELATIONAL:
     free_rel_node(&expr->relational);
+    break;
+  case EXPR_BOOL:
     break;
   }
 }
@@ -705,7 +725,8 @@ static void free_cond_block_node(cond_block_node *block) {
 static void free_instr(instr_node *instr) {
   switch (instr->kind) {
   case INSTR_INITIALIZE:
-    free_arithmetic_expr_node(instr->initialize_variable.expr);
+    if (instr->initialize_variable.var.type != TYPE_BOOL)
+      free_arithmetic_expr_node(instr->initialize_variable.arithmetic);
     break;
 
   case INSTR_DECLARE_ARRAY:

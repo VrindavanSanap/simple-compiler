@@ -30,6 +30,8 @@ typedef enum type {
   TYPE_I64,
   TYPE_I128,
 
+  TYPE_BOOL,
+
   TYPE_CHAR,
 
   TYPE_STRING,

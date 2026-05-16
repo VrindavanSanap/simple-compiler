@@ -68,6 +68,9 @@ const char *token_kind_to_str(token_kind kind) {
   case TOKEN_TYPE_CHAR:
     return "type_char";
 
+  case TOKEN_TYPE_BOOL:
+    return "type_bool";
+
   case TOKEN_PDIR_INCLUDE:
     return "pdir_include";
 
@@ -75,6 +78,8 @@ const char *token_kind_to_str(token_kind kind) {
     return "integer";
   case TOKEN_CHAR_LITERAL:
     return "char";
+  case TOKEN_BOOL_LITERAL:
+    return "bool";
   case TOKEN_STRING_LITERAL:
     return "string";
 
@@ -191,6 +196,9 @@ char *token_get_value(token token) {
       buf = malloc(len);
       snprintf(buf, len, "%c", token.value.character);
       break;
+
+    case TLV_BOOL:
+      printf(token.value.boolean ? "true" : "false");
 
     case TLV_STR:
       len = snprintf(NULL, 0, "%s", token.value.str) + 1;

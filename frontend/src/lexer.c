@@ -500,6 +500,8 @@ restart:
 
     LEX_KEYWORD("char", TOKEN_TYPE_CHAR)
 
+    LEX_KEYWORD("bool", TOKEN_TYPE_BOOL)
+
     // Control flow
     LEX_KEYWORD("if", TOKEN_IF)
     LEX_KEYWORD("else", TOKEN_ELSE)
@@ -521,6 +523,22 @@ restart:
     LEX_KEYWORD("return", TOKEN_RETURN)
 
 #undef LEX_KEYWORD
+
+    if (strcmp(value, "true") == 0) {
+      free(value);
+      return (token){.kind = TOKEN_BOOL_LITERAL,
+                     .value.kind = TLV_BOOL,
+                     .value.integer = true,
+                     .line = l->line};
+    }
+
+    if (strcmp(value, "false") == 0) {
+      free(value);
+      return (token){.kind = TOKEN_BOOL_LITERAL,
+                     .value.kind = TLV_BOOL,
+                     .value.integer = false,
+                     .line = l->line};
+    }
 
     return (token){.kind = TOKEN_IDENTIFIER,
                    .value.kind = TLV_STR,

@@ -6,6 +6,7 @@
  */
 
 #include "core/common.h"
+#include "frontend/token.h"
 
 #include "frontend/types.h"
 
@@ -18,6 +19,7 @@ u32 type_size(type t) {
   case TYPE_U8:
   case TYPE_I8:
   case TYPE_CHAR:
+  case TYPE_BOOL:
     return 1;
 
   case TYPE_U16:
@@ -67,6 +69,9 @@ const char *type_to_str(type type) {
   case TYPE_I128:
     return "i128";
 
+  case TYPE_BOOL:
+    return "bool";
+
   case TYPE_CHAR:
     return "char";
 
@@ -104,6 +109,9 @@ type type_from_specifier_token(token_kind specifier) {
     return TYPE_I64;
   case TOKEN_TYPE_I128:
     return TYPE_I128;
+
+  case TOKEN_TYPE_BOOL:
+    return TYPE_BOOL;
 
   case TOKEN_TYPE_CHAR:
     return TYPE_CHAR;

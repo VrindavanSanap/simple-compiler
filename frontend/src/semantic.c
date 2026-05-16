@@ -24,7 +24,7 @@ u32 evaluate_const_expr(arithmetic_expr_node *expr) {
   }
 
   switch (expr->kind) {
-  case EXPR_TERM:
+  case EXPR_AR_TERM:
     if (expr->term.kind == TERM_INT) {
       return expr->term.value.integer;
     }
@@ -172,7 +172,7 @@ static void term_check_variables(term_node *term, ht *variables,
 static void arithmetic_expr_check_variables(arithmetic_expr_node *expr,
                                             ht *variables, ht *functions) {
   switch (expr->kind) {
-  case EXPR_TERM:
+  case EXPR_AR_TERM:
     term_check_variables(&expr->term, variables, functions);
     break;
 
@@ -222,11 +222,16 @@ static void logical_check_variables(logical_node *log, ht *variables,
 static void expr_check_variables(expr_node *expr, ht *variables,
                                  ht *functions) {
   switch (expr->kind) {
+  case EXPR_TERM:
+    term_check_variables(&expr->term, variables, functions);
+    break;
   case EXPR_LOGICAL:
     logical_check_variables(&expr->logical, variables, functions);
     break;
   case EXPR_RELATIONAL:
     rel_check_variables(&expr->relational, variables, functions);
+    break;
+  case EXPR_BOOL:
     break;
   }
 }
@@ -310,8 +315,13 @@ static void instr_check_variables(instr_node *instr, ht *variables,
     break;
 
   case INSTR_INITIALIZE:
-    arithmetic_expr_check_variables(instr->initialize_variable.expr, variables,
-                                    functions);
+    if (instr->initialize_variable.var.type == TYPE_BOOL) {
+      expr_check_variables(&instr->initialize_variable.boolean, variables,
+                           functions);
+    } else {
+      arithmetic_expr_check_variables(instr->initialize_variable.arithmetic,
+                                      variables, functions);
+    }
     declare_variables(&instr->initialize_variable.var, variables);
     break;
 
@@ -665,7 +675,7 @@ static type arithmetic_expr_type(arithmetic_expr_node *expr, type target_type,
   type lhs, rhs;
 
   switch (expr->kind) {
-  case EXPR_TERM:
+  case EXPR_AR_TERM:
     return term_type(&expr->term, target_type, variables, functions);
 
   case EXPR_ADD:
@@ -731,11 +741,20 @@ static void logical_typecheck(logical_node *log, ht *variables, ht *functions) {
 
 static void expr_typecheck(expr_node *expr, ht *variables, ht *functions) {
   switch (expr->kind) {
+  case EXPR_TERM: {
+    type t = term_type(&expr->term, TYPE_BOOL, variables, functions);
+    if (t != TYPE_BOOL)
+      scu_perror("Expected a boolean expression, got %s [line %" PRIu64 "]\n",
+                 type_to_str(t), expr->term.line);
+    break;
+  }
   case EXPR_LOGICAL:
     logical_typecheck(&expr->logical, variables, functions);
     break;
   case EXPR_RELATIONAL:
     rel_typecheck(&expr->relational, variables, functions);
+    break;
+  case EXPR_BOOL:
     break;
   }
 }
@@ -750,8 +769,13 @@ static void instr_typecheck(instr_node *instr, ht *variables, ht *functions) {
   switch (instr->kind) {
   case INSTR_INITIALIZE: {
     type target_type = instr->initialize_variable.var.type;
-    type expr_result = arithmetic_expr_type(instr->initialize_variable.expr,
-                                            target_type, variables, functions);
+    if (target_type == TYPE_BOOL) {
+      expr_typecheck(&instr->initialize_variable.boolean, variables, functions);
+      break;
+    }
+    type expr_result =
+        arithmetic_expr_type(instr->initialize_variable.arithmetic, target_type,
+                             variables, functions);
     if (target_type == TYPE_POINTER) {
       return;
     } else if (target_type != expr_result) {

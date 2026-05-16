@@ -8,6 +8,7 @@
 #include "frontend/parser.h"
 #include "frontend/ast.h"
 #include "frontend/token.h"
+#include "frontend/types.h"
 #include "frontend/var.h"
 
 #include "core/common.h"
@@ -208,7 +209,7 @@ static arithmetic_expr_node *parse_factor(parser *p) {
       token.kind == TOKEN_STRING_LITERAL || token.kind == TOKEN_ADDRESS_OF) {
     arithmetic_expr_node *node =
         arena_push_struct(ast_arena, arithmetic_expr_node);
-    node->kind = EXPR_TERM;
+    node->kind = EXPR_AR_TERM;
     node->line = token.line;
 
     if (token.kind == TOKEN_INT_LITERAL) {
@@ -385,13 +386,7 @@ static arithmetic_expr_node *parse_arithmetic_expr(parser *p) {
   return left;
 }
 
-/*
- * @brief: parse a relational expression.
- *
- * @param p: pointer to the parser state.
- * @param rel: pointer to a rel_node struct.
- */
-static void parse_rel(parser *p, rel_node *rel) {
+static bool try_parse_rel(parser *p, rel_node *rel, term_node *lhs) {
   typedef struct {
     token_kind token_type;
     rel_kind rel_type;
@@ -406,29 +401,22 @@ static void parse_rel(parser *p, rel_node *rel) {
       {TOKEN_GREATER_THAN_OR_EQUAL, REL_GREATER_THAN_OR_EQUAL}};
 
   token token = {0};
-  term_node lhs = {0}, rhs = {0};
-
-  parse_term_for_expr(p, &lhs);
   parser_current(p, &token);
   rel->line = token.line;
 
   for (u64 i = 0; i < sizeof(mappings) / sizeof(mappings[0]); i++) {
     if (token.kind == mappings[i].token_type) {
       parser_advance(p);
+      term_node rhs = {0};
       parse_term_for_expr(p, &rhs);
-
       rel->kind = mappings[i].rel_type;
-      rel->comparison.lhs = lhs;
+      rel->comparison.lhs = *lhs;
       rel->comparison.rhs = rhs;
-      return;
+      return true;
     }
   }
-
-  scu_perror("Expected a relation (==, !=, <, <=, >, >=), got %s [line %d]\n",
-             token_kind_to_str(token.kind), token.line);
+  return false;
 }
-
-static void parse_expr(parser *p, expr_node *expr);
 
 static void parse_logical_or(parser *p, expr_node *expr);
 
@@ -439,7 +427,6 @@ static void parse_logical_not(parser *p, expr_node *expr) {
   if (token.kind == TOKEN_LPAREN) {
     parser_advance(p);
     parse_logical_or(p, expr);
-
     parser_current(p, &token);
     if (token.kind != TOKEN_RPAREN)
       scu_perror("Expected ')' [line %u]\n", token.line);
@@ -449,10 +436,8 @@ static void parse_logical_not(parser *p, expr_node *expr) {
 
   if (token.kind == TOKEN_NOT) {
     parser_advance(p);
-
     expr_node *operand = arena_push_struct(ast_arena, expr_node);
     parse_logical_not(p, operand);
-
     expr->kind = EXPR_LOGICAL;
     expr->logical.kind = LOG_NOT;
     expr->logical.line = token.line;
@@ -460,8 +445,23 @@ static void parse_logical_not(parser *p, expr_node *expr) {
     return;
   }
 
-  expr->kind = EXPR_RELATIONAL;
-  parse_rel(p, &expr->relational);
+  if (token.kind == TOKEN_BOOL_LITERAL) {
+    expr->kind = EXPR_BOOL;
+    expr->boolean = token.value.boolean;
+    parser_advance(p);
+    return;
+  }
+
+  // parse the lhs term, then decide: relational or standalone bool var
+  term_node lhs = {0};
+  parse_term_for_expr(p, &lhs);
+
+  if (try_parse_rel(p, &expr->relational, &lhs)) {
+    expr->kind = EXPR_RELATIONAL;
+  } else {
+    expr->kind = EXPR_TERM;
+    expr->term = lhs;
+  }
 }
 
 static void parse_logical_and(parser *p, expr_node *expr) {
@@ -531,7 +531,11 @@ static void parse_initialize(parser *p, instr_node *instr, type _type,
   instr->initialize_variable.var.name = _name;
   parser_advance(p);
 
-  instr->initialize_variable.expr = parse_arithmetic_expr(p);
+  if (_type == TYPE_BOOL) {
+    parse_expr(p, &instr->initialize_variable.boolean);
+  } else {
+    instr->initialize_variable.arithmetic = parse_arithmetic_expr(p);
+  }
 }
 
 /*
@@ -1242,6 +1246,7 @@ static bool parse_instr(parser *p, instr_node *instr) {
   case TOKEN_TYPE_U32:
   case TOKEN_TYPE_U64:
   case TOKEN_TYPE_U128:
+  case TOKEN_TYPE_BOOL:
   case TOKEN_TYPE_CHAR:
     parse_declare(p, instr);
     return true;
