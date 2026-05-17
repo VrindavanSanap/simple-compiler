@@ -7,67 +7,32 @@ set(CMAKE_CXX_COMPILER ${CLANGXX} CACHE STRING "" FORCE)
 
 project(scull LANGUAGES C CXX)
 
-include(ExternalProject)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ##########
 #  LLVM  #
 ##########
 
-set(LLVM_SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/llvm-project/llvm)
-set(LLVM_BUILD_DIR  ${CMAKE_SOURCE_DIR}/external/llvm-project/build)
-set(LLVM_LIB        ${LLVM_BUILD_DIR}/lib)
-set(LLVM_INC        
-  ${LLVM_BUILD_DIR}/include
-  ${LLVM_SOURCE_DIR}/include
-)
-set(LLVM_CONFIG     ${LLVM_BUILD_DIR}/bin/llvm-config)
-
-cmake_host_system_information(RESULT NPROC QUERY NUMBER_OF_LOGICAL_CORES)
-
-if(NOT EXISTS ${LLVM_SOURCE_DIR}/CMakeLists.txt)
-  message(STATUS "[LLVM] Syncing submodule...")
-  execute_process(
-    COMMAND git submodule sync --recursive
-    COMMAND git submodule update --init --recursive --depth 1
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND_ERROR_IS_FATAL ANY
-  )
+# Auto-detect brew-installed LLVM on macOS when LLVM_DIR is not explicitly set
+if(APPLE AND NOT DEFINED LLVM_DIR)
+  find_program(BREW brew)
+  if(BREW)
+    execute_process(
+      COMMAND ${BREW} --prefix llvm
+      OUTPUT_VARIABLE _BREW_LLVM_PREFIX
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+    )
+    if(_BREW_LLVM_PREFIX AND EXISTS "${_BREW_LLVM_PREFIX}/lib/cmake/llvm")
+      set(LLVM_DIR "${_BREW_LLVM_PREFIX}/lib/cmake/llvm" CACHE PATH "LLVM CMake directory")
+    endif()
+  endif()
 endif()
 
-ExternalProject_Add(llvm_project
-  SOURCE_DIR       ${LLVM_SOURCE_DIR}
-  BINARY_DIR       ${LLVM_BUILD_DIR}
-  INSTALL_COMMAND  ""
-  CMAKE_GENERATOR  Ninja
-  CMAKE_ARGS
-    -DCMAKE_BUILD_TYPE=Release
-    -DLLVM_TARGETS_TO_BUILD=all
-    -DLLVM_ENABLE_RTTI=ON
-    -DLLVM_ENABLE_EH=ON
-    -DLLVM_ENABLE_TERMINFO=OFF
-    -DLLVM_ENABLE_ZLIB=OFF
-    -DLLVM_ENABLE_ZSTD=OFF
-    -DLLVM_ENABLE_LIBXML2=OFF
-    -DLLVM_INCLUDE_TESTS=OFF
-    -DLLVM_INCLUDE_EXAMPLES=OFF
-    -DLLVM_INCLUDE_BENCHMARKS=OFF
-    -DLLVM_BUILD_LLVM_DYLIB=ON
-    -DLLVM_LINK_LLVM_DYLIB=ON
-    -DBUILD_SHARED_LIBS=OFF
-  BUILD_COMMAND    ninja -j ${NPROC}
-  BUILD_BYPRODUCTS ${LLVM_SENTINEL}
-  STAMP_DIR        ${CMAKE_BINARY_DIR}/llvm-stamps
-)
+find_package(LLVM REQUIRED CONFIG)
+message(STATUS "[LLVM] Found ${LLVM_PACKAGE_VERSION} at ${LLVM_DIR}")
 
-execute_process(COMMAND ${LLVM_CONFIG} --cxxflags
-  OUTPUT_VARIABLE _LLVM_CXXFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND ${LLVM_CONFIG} --system-libs
-  OUTPUT_VARIABLE _LLVM_SYSTEM_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-separate_arguments(LLVM_CXXFLAGS    UNIX_COMMAND ${_LLVM_CXXFLAGS})
-separate_arguments(LLVM_SYSTEM_LIBS UNIX_COMMAND ${_LLVM_SYSTEM_LIBS})
+include(AddLLVM)
 
 ################
 # Build Types  #
@@ -104,7 +69,6 @@ set_target_properties(core PROPERTIES
 )
 
 target_include_directories(core PUBLIC ${CORE_INC_DIR})
-add_dependencies(core llvm_project)
 
 target_compile_options(core PRIVATE
   $<$<COMPILE_LANGUAGE:C>:   ${CMAKE_C_FLAGS}>
@@ -131,7 +95,6 @@ set_target_properties(frontend PROPERTIES
 
 target_include_directories(frontend PUBLIC ${FRONTEND_INC_DIR})
 target_link_libraries(frontend PRIVATE core)
-add_dependencies(frontend llvm_project)
 
 target_compile_options(frontend PRIVATE
   $<$<COMPILE_LANGUAGE:C>:   ${CMAKE_C_FLAGS}>
@@ -155,23 +118,24 @@ set_target_properties(sclc PROPERTIES
   CXX_STANDARD             17
   CXX_STANDARD_REQUIRED    ON
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/sclc-bin
-  BUILD_RPATH              "$ORIGIN/../external/llvm-project/build/lib"
+  BUILD_RPATH              "${LLVM_LIBRARY_DIR}"
+  INSTALL_RPATH            "${LLVM_LIBRARY_DIR}"
 )
 
 target_include_directories(sclc PRIVATE
   ${INC_DIR}
-  ${LLVM_INC}
+  ${LLVM_INCLUDE_DIRS}
 )
+
+target_compile_definitions(sclc PRIVATE ${LLVM_DEFINITIONS})
 
 target_compile_options(sclc PRIVATE
   $<$<COMPILE_LANGUAGE:C>:   ${CMAKE_C_FLAGS}>
-  $<$<COMPILE_LANGUAGE:CXX>: ${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -Wno-unused-parameter>
+  $<$<COMPILE_LANGUAGE:CXX>: ${CMAKE_CXX_FLAGS} -Wno-unused-parameter>
 )
 
-target_link_directories(sclc PRIVATE ${LLVM_LIB})
-target_link_libraries(sclc PRIVATE core frontend LLVM ${LLVM_SYSTEM_LIBS} m)
-
-add_dependencies(sclc llvm_project)
+target_link_directories(sclc PRIVATE ${LLVM_LIBRARY_DIR})
+target_link_libraries(sclc PRIVATE core frontend LLVM m)
 
 add_custom_target(do-install
   COMMAND sudo cp $<TARGET_FILE:sclc> /usr/local/bin/sclc
