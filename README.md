@@ -7,7 +7,7 @@ Yet another systems programming language.
 ```
 -include "io.scl"
 
-fn main() : int {
+fn main() : i32 {
   printf("Hello, World!\n")
   return 0
 }
@@ -17,18 +17,17 @@ Compile and run:
 
 ```
 # clone and cd to the repo
-$ git clone https://github.com/smyk07/scull.git
+$ git clone https://github.com/scull-lang/scull.git
 $ cd scull
 
 # build llvm and sclc
 $ mkdir build && cd build
-$ cmake ..
+$ cmake .. -DCMAKE_BUILD_TYPE=Debug
 $ cmake --build . --target llvm_project
-$ cmake ..
 $ cmake --build . --target sclc
 
 # compile the program
-$ ./build/bin/sclc -i ./lib hello.scl
+$ ./build/sclc-bin/sclc -i ./lib hello.scl
 
 # run the compiled binary
 $ ./hello

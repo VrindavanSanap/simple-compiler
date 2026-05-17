@@ -3,6 +3,6 @@
  * Uses the C Standard Library for now.
  *-
 
-fn printf(char *format, ...) : int
+fn printf(char *format, ...) : i32
 
-fn scanf(char *format, ...) : int
+fn scanf(char *format, ...) : i32

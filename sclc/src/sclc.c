@@ -6,21 +6,23 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "backend/backend.h"
-#include "cstate.h"
-#include "ds/dynamic_array.h"
-#include "fstate.h"
-#include "lexer.h"
-#include "parser.h"
-#include "semantic.h"
-#include "utils.h"
+#include "sclc/backend/backend.h"
+#include "sclc/cstate.h"
+#include "sclc/fstate.h"
+
+#include "frontend/lexer.h"
+#include "frontend/parser.h"
+#include "frontend/semantic.h"
+
+#include "core/ds/dynamic_array.h"
+#include "core/utils.h"
 
 #include <time.h>
 
 int main(int argc, char *argv[]) {
   // Initialize compiler state
   cstate cst = {0};
-  cstate_init(&cst, (u32)argc, argv);
+  cstate_init(&cst, argc, argv);
 
   backend backend;
   backend_init(&backend, &cst);
@@ -40,7 +42,7 @@ int main(int argc, char *argv[]) {
     // Lexing debug statements
     if (cst.options.verbose) {
       scu_pdebug("Lexing Debug Statements for %s:\n", fst->filepath);
-      lexer_print_tokens(&fst->tokens);
+      token_print_tokens(&fst->tokens);
     }
 
     // Parsing

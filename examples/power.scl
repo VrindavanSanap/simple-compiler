@@ -1,10 +1,10 @@
 -include "io.scl"
 
-fn main() : int {
-  int base
-  int exponent
-  int result = 1
-  int counter = 0
+fn main() : i32 {
+  i32 base
+  i32 exponent
+  i32 result = 1
+  i32 counter = 0
   
   printf("Enter base and exponent: ")
   scanf("%d%d", &base, &exponent)

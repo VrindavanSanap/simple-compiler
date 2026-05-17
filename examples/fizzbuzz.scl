@@ -1,9 +1,9 @@
 -include "io.scl"
 
-fn main() : int {
+fn main() : i32 {
   for i in 1...100 {
-    int mod3 = i % 3
-    int mod5 = i % 5
+    i32 mod3 = i % 3
+    i32 mod5 = i % 5
 
     if mod3 == 0 {
       if mod5 == 0 {

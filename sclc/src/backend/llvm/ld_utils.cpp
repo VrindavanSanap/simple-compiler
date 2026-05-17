@@ -5,10 +5,10 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "backend/llvm/ld_utils.hpp"
+#include "sclc/backend/llvm/ld_utils.hpp"
 
 extern "C" {
-#include "utils.h"
+#include "core/utils.h"
 }
 
 #include <cstdio>

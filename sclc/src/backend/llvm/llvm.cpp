@@ -5,20 +5,19 @@
  * Licensed under the GNU/GPL Version 3
  */
 
-#include "backend/llvm/llvm.h"
-#include "backend/llvm/ld_utils.hpp"
-#include "backend/llvm/llvm_irgen.hpp"
-#include <filesystem>
-#include <stddef.h>
+#include "sclc/backend/llvm/ld_utils.hpp"
+#include "sclc/backend/llvm/llvm_irgen.hpp"
 
 extern "C" {
-#include "ast.h"
-#include "backend/llvm/llvm.h"
-#include "common.h"
-#include "cstate.h"
-#include "ds/dynamic_array.h"
-#include "fstate.h"
-#include "utils.h"
+#include "sclc/backend/llvm/llvm.h"
+#include "sclc/cstate.h"
+#include "sclc/fstate.h"
+
+#include "frontend/ast.h"
+
+#include "core/common.h"
+#include "core/ds/dynamic_array.h"
+#include "core/utils.h"
 }
 
 #include <llvm/IR/IRBuilder.h>
@@ -35,6 +34,8 @@ extern "C" {
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/TargetParser/Host.h>
 #include <llvm/TargetParser/Triple.h>
+
+#include <filesystem>
 
 typedef struct llvm_backend_ctx llvm_backend_ctx;
 
@@ -153,7 +154,14 @@ void llvm_backend_emit(cstate *cst, fstate *fst) {
   }
 
   if (cst->options.emit_llvm) {
-    std::string ir_filename = std::string(fst->extracted_filepath) + ".ll";
+    std::string ir_filename;
+
+    if (cst->options.explicit_output_specified) {
+      ir_filename = cst->output_filepath;
+    } else {
+      ir_filename = std::string(fst->extracted_filepath) + ".ll";
+    }
+
     llvm::raw_fd_ostream ir_file(ir_filename, ec, llvm::sys::fs::OF_None);
 
     if (!ec) {
@@ -168,7 +176,14 @@ void llvm_backend_emit(cstate *cst, fstate *fst) {
   }
 
   if (cst->options.emit_asm) {
-    std::string asm_filename = std::string(fst->extracted_filepath) + ".s";
+    std::string asm_filename;
+
+    if (cst->options.explicit_output_specified) {
+      asm_filename = cst->output_filepath;
+    } else {
+      asm_filename = std::string(fst->extracted_filepath) + ".s";
+    }
+
     llvm::raw_fd_ostream asm_dest(asm_filename, ec, llvm::sys::fs::OF_None);
 
     if (ec) {
@@ -191,9 +206,13 @@ void llvm_backend_emit(cstate *cst, fstate *fst) {
 
   std::string obj_filename;
 
-  if (cst->options.compile_only)
-    obj_filename = std::string(fst->extracted_filepath) + ".o";
-  else {
+  if (cst->options.compile_only) {
+    if (cst->options.explicit_output_specified) {
+      obj_filename = cst->output_filepath;
+    } else {
+      obj_filename = std::string(fst->extracted_filepath) + ".o";
+    }
+  } else {
     obj_filename = "/tmp/sclc/" + std::string(fst->extracted_filepath) + ".o";
 
     std::filesystem::path obj_path(obj_filename);

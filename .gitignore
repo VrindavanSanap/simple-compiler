@@ -3,10 +3,17 @@
 !/sclc/
 !/sclc/**
 
+!/core/
+!/core/**
+
+!/frontend/
+!/frontend/**
+
 !/lib/
 !/lib/**
 
 !/examples/
+!/examples/**.scl
 
 !/logo/
 !/logo/**

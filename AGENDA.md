@@ -14,35 +14,18 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 ### Build System, Tooling, Infrastructure & UX
 
-- [x] NEC Better arena implementation with chaining
-- [ ] NEC Use arenas in data structures
-- [x] NEC Only emit output file in current directory unless specified with `-c`, else use `/tmp`
-- [x] NEC Add `-O` cli option
-- [x] NEC Separate backend from frontend, clean backend interface in `src/sclc.c`
-- [x] NEC Separate stack-based and heap-based allocations
-- [ ] NEX Add option to parse and use -o before/after -c for specifying where the object file should be stored
-
-- [x] NEC make typedefs for ints and floats: u32, u64, f32, etc in utils and use uniformly across codebase
+- [x] NEC Add option to parse and use -o before/after -c for specifying where the object file should be stored
+- [x] NEC Seperate frontend (lexer, parser, semantic), core (data structures, common.h), and sclc (cstate, fstate, backend)
 
 ### Error Handling & Debugging
 
 - [ ] NEC Better errors
-  - [ ] Fix existing bugs
+  - [ ] Fix existing bugs related to errors
   - [ ] Errors with source preview
-- [x] NEC Tab counting in AST printer
-- [x] NEC Parser bug fixes and proper memory management
-- [ ] NEC Parser refactor
-  - reduce pre-defined parsables into instructions, rather than the existing
-  - will follow a similar top-down approach but would be better to add features to and read
 
 ### Testing
 
-- [ ] NEC Test cases
-  - [ ] Lexer
-  - [ ] Parser
-  - [ ] Semantic analysis
-  - [ ] Codegen / Backend
-  - [ ] End-to-End
+- [ ] NEC Test cases for each logical module
 
 ---
 
@@ -50,33 +33,24 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 ### Frontend
 
-- [ ] ? Look into pratt parsing
+- [ ] NEC Source Location field in AST
 
-### LLVM Backend
+- [ ] NEC Parser refactor
+  - reduce pre-defined parsables into instructions, rather than the existing
+  - will follow a similar top-down approach but would be better to add features to and read
 
-- [x] NEC Switch to LLVM backend (C bindings)
-  - Targets: x86_64, ARM64, RISCV64
-- [x] NEC Handle LLVM target selection in cstate
-- [x] NEC `-S` CLI flag and `--emit-llvm` flag, general CLI improvements
-- [x] NEC Move linking to llvm backend, since linking is only needed there (For now)
+- [ ] NEC pratt parsing for expressions
 
-- [ ] NEC Move to llvm submodule instead of system installation of llvm-21
-  - [x] basic setup
-  - [x] handle linking through cc which is available everywhere
-  - [ ] find and fix bugs (eg. `./examples/linear_search.scl`)
-        idk this automatically fixed itself somehow
+- [ ] NEC Write a EBNF Grammar specification or similar for scull
 
-### Alternative Backends
+### Backend
 
 - [ ] NEC Develop C Backend
   - Language changes for 1:1 C translation needed
   - Basic types, structs, unions, enums, memory management, etc.
 
-- [ ] EXP Optional cosmopolitan backend for generating fat binaries
-
 ### Distribution
 
-- [ ] EXP Build with [jart/cosmopolitan](https://github.com/jart/cosmopolitan) for fat binary portability
 - [ ] EXP Bootstrapping Strategy (inspired by Zig):
   - Generated C code (one file) of compiler source ships with release
   - User compiles bootstrap binary with system C compiler
@@ -87,26 +61,33 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 ## Phase 3: Core Language Features
 
-### Syntax
+### Type System, Variables, etc
 
-- [ ] NEC Write a EBNF Grammar specification for scull
+- [x] NEC Unsigned ints (`u32`), signed ints (`i32`)
+- [x] NEC int literals
 
-### Type System
+- [ ] NEC floats (f16, f32, f64, f80, f128)
+- [ ] NEC float literals
 
-- [ ] NEC `void` type
-- [ ] NEC Unsigned ints (`u32`) and signed ints (`i32`)
-- [ ] NEC Boolean type
+- [x] NEC Boolean type (`bool`)
+
 - [ ] NEC Typedefs
-- [ ] NEC Better way to declare variables: `let x: u32 = 3`
+- [ ] NEC Better strings
+- [ ] NEC Multi-dimensional arrays
 - [ ] ? Type casting
 - [ ] ? Type inference
 
-### Control Flow
+- [ ] NEC Better way to declare variables
 
-- [x] NEC If statement
-- [x] NEC Else statement
-- [x] NEC Else if statement
-- [x] NEC Switch/match statement
+```
+let modifiers name : type = literal -- rust style
+
+modifiers name : type = literal -- zig style
+
+modifiers type name = literal -- c style
+```
+
+### Control Flow
 
 - [ ] NEC For loop
   - [x] Basic implementation
@@ -116,20 +97,22 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 
 - [ ] NEC Ternary operator-like functionality using if-elseif-else in assignment
 
-- [ ] NEX Seperate scopes for multi-instr conditional blocks (if-else, match, ...)
+- [ ] NEC Seperate scopes for multi-instr conditional blocks (if-else, match, ...)
 
 ### Operators
 
-- [ ] NEC Logical operators (`&&`, `||`, `!`)
+- [x] NEC Logical operators (`&&`, `||`, `!`)
 - [ ] NEC Bitwise operators (`&`, `|`, `^`, `~`, `<<`, `>>`)
 - [ ] NEC Assignment operators (`+=`, `-=`, `*=`, `/=`, etc.)
 
-### Basic Features
+### More Advanced Features
 
-- [x] NEC Strings
-- [x] NEC Negative numbers
-- [ ] NEC Multi-dimensional arrays
-- [ ] NEC Alternative for `sizeof()`
+- [ ] NEC Alternative for `sizeof()` and `typeof()`
+
+- [ ] ? Memory management
+  - explicit allocators
+  - defer
+  - RAII for allocators
 
 ---
 
@@ -167,6 +150,12 @@ Please Follow [this](https://www.conventionalcommits.org/en/v1.0.0/) as a commit
 ## Phase 5: Experimental Features
 
 ### Advanced Type System
+
+- [ ] NEC Owned types
+
+```scl
+  int own *T;
+```
 
 - [ ] EXP Nullable types
 

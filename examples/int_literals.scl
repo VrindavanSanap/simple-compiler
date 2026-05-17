@@ -1,0 +1,19 @@
+-include "io.scl"
+
+fn print_u32(u32 num) {
+  printf("0b%b\n", num)
+  printf("0%o\n", num)
+  printf("%ld\n", num)
+  printf("0x%x\n", num)
+}
+
+fn main() : i32 {
+  u32 bin = 0b11010101010101010101010101010101
+  u32 oct = 037777777777
+  u32 dec = 67
+  u32 hex = 0xdeadbeef
+
+  print_u32(hex)
+
+  return 0
+}
